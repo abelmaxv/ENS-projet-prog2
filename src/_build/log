@@ -1,125 +1,87 @@
-# dune build
+# dune build @all
 # OCAMLPARAM: unset
-# Shared cache: disabled
 # Workspace root:
-# /users/dptinfo/verley/Documents/programmation/ENS-projet-prog2/src
-# Auto-detected concurrency: 8
-$ /usr/bin/ocamlc.opt -config > /tmp/dune_d89ce5_output
+# /Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src
+$ /usr/bin/getconf _NPROCESSORS_ONLN > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunef10e79.output 2> /dev/null
+# Auto-detected concurrency: 4
+# disable binary cache
+$ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunebd3ff9.output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
-#  ; profile = Dev
+#  ; profile = Dyn
 #  ; merlin = true
 #  ; for_host = None
 #  ; fdo_target_exe = None
-#  ; build_dir = In_build_dir "default"
-#  ; ocaml_bin = External "/usr/bin"
-#  ; ocaml = Ok External "/usr/bin/ocaml"
-#  ; ocamlc = External "/usr/bin/ocamlc.opt"
-#  ; ocamlopt = Ok External "/usr/bin/ocamlopt.opt"
-#  ; ocamldep = Ok External "/usr/bin/ocamldep.opt"
-#  ; ocamlmklib = Ok External "/usr/bin/ocamlmklib.opt"
+#  ; build_dir = "default"
+#  ; toplevel_path =
+#      Some External "/Users/abelverley/.opam/4.07.1/lib/toplevel"
+#  ; ocaml_bin = External "/Users/abelverley/.opam/4.07.1/bin"
+#  ; ocaml = Ok External "/Users/abelverley/.opam/4.07.1/bin/ocaml"
+#  ; ocamlc = External "/Users/abelverley/.opam/4.07.1/bin/ocamlc.opt"
+#  ; ocamlopt = Ok External "/Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt"
+#  ; ocamldep = Ok External "/Users/abelverley/.opam/4.07.1/bin/ocamldep.opt"
+#  ; ocamlmklib =
+#      Ok External "/Users/abelverley/.opam/4.07.1/bin/ocamlmklib.opt"
 #  ; env =
 #      map
-#        { "DUNE_OCAML_HARDCODED" : "/users/dptinfo/verley/.opam/default/lib"
-#        ; "DUNE_OCAML_STDLIB" : "/usr/lib/ocaml"
+#        { "DUNE_OCAML_HARDCODED" : "/Users/abelverley/.opam/4.07.1/lib"
+#        ; "DUNE_OCAML_STDLIB" : "/Users/abelverley/.opam/4.07.1/lib/ocaml"
 #        ; "DUNE_SOURCEROOT" :
-#            "/users/dptinfo/verley/Documents/programmation/ENS-projet-prog2/src"
+#            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src"
 #        ; "INSIDE_DUNE" :
-#            "/users/dptinfo/verley/Documents/programmation/ENS-projet-prog2/src/_build/default"
+#            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src/_build/default"
+#        ; "MANPATH" :
+#            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src/_build/install/default/bin"
 #        ; "OCAMLFIND_IGNORE_DUPS_IN" :
-#            "/users/dptinfo/verley/Documents/programmation/ENS-projet-prog2/src/_build/install/default/lib"
+#            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src/_build/install/default/lib"
 #        ; "OCAMLPATH" :
-#            "/users/dptinfo/verley/Documents/programmation/ENS-projet-prog2/src/_build/install/default/lib"
+#            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src/_build/install/default/lib"
 #        ; "OCAMLTOP_INCLUDE_PATH" :
-#            "/users/dptinfo/verley/Documents/programmation/ENS-projet-prog2/src/_build/install/default/lib/toplevel"
+#            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src/_build/install/default/lib/toplevel"
 #        ; "OCAML_COLOR" : "always"
 #        ; "OPAMCOLOR" : "always"
 #        }
-#  ; findlib_paths = [ External "/users/dptinfo/verley/.opam/default/lib" ]
+#  ; findlib_path = [ External "/Users/abelverley/.opam/4.07.1/lib" ]
+#  ; arch_sixtyfour = true
 #  ; natdynlink_supported = true
 #  ; supports_shared_libraries = true
 #  ; ocaml_config =
-#      { version = "4.13.1"
-#      ; standard_library_default = "/usr/lib/ocaml"
-#      ; standard_library = "/usr/lib/ocaml"
-#      ; standard_runtime = "the_standard_runtime_variable_was_deleted"
+#      { version = "4.07.1"
+#      ; standard_library_default = "/Users/abelverley/.opam/4.07.1/lib/ocaml"
+#      ; standard_library = "/Users/abelverley/.opam/4.07.1/lib/ocaml"
+#      ; standard_runtime = "/Users/abelverley/.opam/4.07.1/bin/ocamlrun"
 #      ; ccomp_type = "cc"
-#      ; c_compiler = "x86_64-linux-gnu-gcc"
-#      ; ocamlc_cflags =
-#          [ "-O2"
-#          ; "-fno-strict-aliasing"
-#          ; "-fwrapv"
-#          ; "-pthread"
-#          ; "-fPIC"
-#          ; "-g"
-#          ; "-O2"
-#          ; "-ffile-prefix-map=/build/ocaml-SC7b9w/ocaml-4.13.1=."
-#          ; "-fstack-protector-strong"
-#          ; "-Wformat"
-#          ; "-Werror=format-security"
-#          ]
-#      ; ocamlc_cppflags =
-#          [ "-D_FILE_OFFSET_BITS=64"; "-Wdate-time"; "-D_FORTIFY_SOURCE=2" ]
-#      ; ocamlopt_cflags =
-#          [ "-O2"
-#          ; "-fno-strict-aliasing"
-#          ; "-fwrapv"
-#          ; "-pthread"
-#          ; "-fPIC"
-#          ; "-g"
-#          ; "-O2"
-#          ; "-ffile-prefix-map=/build/ocaml-SC7b9w/ocaml-4.13.1=."
-#          ; "-fstack-protector-strong"
-#          ; "-Wformat"
-#          ; "-Werror=format-security"
-#          ]
-#      ; ocamlopt_cppflags =
-#          [ "-D_FILE_OFFSET_BITS=64"; "-Wdate-time"; "-D_FORTIFY_SOURCE=2" ]
+#      ; c_compiler = "cc"
+#      ; ocamlc_cflags = [ "-O2"; "-fno-strict-aliasing"; "-fwrapv" ]
+#      ; ocamlc_cppflags = [ "-D_FILE_OFFSET_BITS=64"; "-D_REENTRANT" ]
+#      ; ocamlopt_cflags = [ "-O2"; "-fno-strict-aliasing"; "-fwrapv" ]
+#      ; ocamlopt_cppflags = [ "-D_FILE_OFFSET_BITS=64"; "-D_REENTRANT" ]
 #      ; bytecomp_c_compiler =
-#          [ "x86_64-linux-gnu-gcc"
+#          [ "cc"
 #          ; "-O2"
 #          ; "-fno-strict-aliasing"
 #          ; "-fwrapv"
-#          ; "-pthread"
-#          ; "-fPIC"
-#          ; "-g"
-#          ; "-O2"
-#          ; "-ffile-prefix-map=/build/ocaml-SC7b9w/ocaml-4.13.1=."
-#          ; "-fstack-protector-strong"
-#          ; "-Wformat"
-#          ; "-Werror=format-security"
 #          ; "-D_FILE_OFFSET_BITS=64"
-#          ; "-Wdate-time"
-#          ; "-D_FORTIFY_SOURCE=2"
+#          ; "-D_REENTRANT"
 #          ]
-#      ; bytecomp_c_libraries = [ "-lm"; "-lpthread" ]
+#      ; bytecomp_c_libraries = [ "-lpthread" ]
 #      ; native_c_compiler =
-#          [ "x86_64-linux-gnu-gcc"
+#          [ "cc"
 #          ; "-O2"
 #          ; "-fno-strict-aliasing"
 #          ; "-fwrapv"
-#          ; "-pthread"
-#          ; "-fPIC"
-#          ; "-g"
-#          ; "-O2"
-#          ; "-ffile-prefix-map=/build/ocaml-SC7b9w/ocaml-4.13.1=."
-#          ; "-fstack-protector-strong"
-#          ; "-Wformat"
-#          ; "-Werror=format-security"
 #          ; "-D_FILE_OFFSET_BITS=64"
-#          ; "-Wdate-time"
-#          ; "-D_FORTIFY_SOURCE=2"
+#          ; "-D_REENTRANT"
 #          ]
-#      ; native_c_libraries = [ "-lm" ]
-#      ; native_pack_linker = [ "x86_64-linux-gnu-ld"; "-r"; "-o" ]
-#      ; cc_profile = []
+#      ; native_c_libraries = []
+#      ; cc_profile = [ "-pg" ]
 #      ; architecture = "amd64"
 #      ; model = "default"
 #      ; int_size = 63
 #      ; word_size = 64
-#      ; system = "linux"
-#      ; asm = [ "x86_64-linux-gnu-as" ]
+#      ; system = "macosx"
+#      ; asm = [ "clang"; "-arch"; "x86_64"; "-Wno-trigraphs"; "-c" ]
 #      ; asm_cfi_supported = true
 #      ; with_frame_pointers = false
 #      ; ext_exe = ""
@@ -130,42 +92,55 @@ $ /usr/bin/ocamlc.opt -config > /tmp/dune_d89ce5_output
 #      ; os_type = "Unix"
 #      ; default_executable_name = "a.out"
 #      ; systhread_supported = true
-#      ; host = "x86_64-pc-linux-gnu"
-#      ; target = "x86_64-pc-linux-gnu"
-#      ; profiling = false
+#      ; host = "x86_64-apple-darwin21.3.0"
+#      ; target = "x86_64-apple-darwin21.3.0"
+#      ; profiling = true
 #      ; flambda = false
 #      ; spacetime = false
-#      ; safe_string = true
-#      ; exec_magic_number = "Caml1999X030"
-#      ; cmi_magic_number = "Caml1999I030"
-#      ; cmo_magic_number = "Caml1999O030"
-#      ; cma_magic_number = "Caml1999A030"
-#      ; cmx_magic_number = "Caml1999Y030"
-#      ; cmxa_magic_number = "Caml1999Z030"
-#      ; ast_impl_magic_number = "Caml1999M030"
-#      ; ast_intf_magic_number = "Caml1999N030"
-#      ; cmxs_magic_number = "Caml1999D030"
-#      ; cmt_magic_number = "Caml1999T030"
+#      ; safe_string = false
+#      ; exec_magic_number = "Caml1999X023"
+#      ; cmi_magic_number = "Caml1999I024"
+#      ; cmo_magic_number = "Caml1999O023"
+#      ; cma_magic_number = "Caml1999A023"
+#      ; cmx_magic_number = "Caml1999Y023"
+#      ; cmxa_magic_number = "Caml1999Z023"
+#      ; ast_impl_magic_number = "Caml1999M023"
+#      ; ast_intf_magic_number = "Caml1999N023"
+#      ; cmxs_magic_number = "Caml1999D023"
+#      ; cmt_magic_number = "Caml1999T024"
 #      ; natdynlink_supported = true
 #      ; supports_shared_libraries = true
 #      ; windows_unicode = false
 #      }
 #  }
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -intf tast.mli) > _build/default/.main.eobjs/dune__exe__Tast.intf.d
-$ (cd _build/default && /usr/bin/ocamlc.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -o .main.eobjs/byte/dune__exe.cmo -c -impl .main.eobjs/dune__exe.ml-gen)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cast.cmi -c -intf cast.mli)
-$ (cd _build/.sandbox/ee84e720949b78a1125a5f9023cca0a0/default && /usr/bin/ocamlc.opt -g -I .main.eobjs/byte -open Dune__exe -short-paths -i -impl cparser__mock.ml.mock) > _build/.sandbox/ee84e720949b78a1125a5f9023cca0a0/default/cparser__mock.mli.inferred
-$ (cd _build/default && /usr/bin/ocamlopt.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml-gen -no-alias-deps -opaque -o .main.eobjs/native/dune__exe.cmx -c -impl .main.eobjs/dune__exe.ml-gen)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Tast.cmi -c -intf tast.mli)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cparser.cmi -c -intf cparser.mli)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cast.cmx -c -impl cast.ml)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Pretty.cmo -c -impl pretty.ml)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Clexer.cmo -c -impl clexer.ml)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Usage.cmo -c -impl usage.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Pretty.cmx -c -impl pretty.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Clexer.cmx -c -impl clexer.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Usage.cmx -c -impl usage.ml)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Main.cmo -c -impl main.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Main.cmx -c -impl main.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cparser.cmx -c -impl cparser.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -o main.exe .main.eobjs/native/dune__exe.cmx .main.eobjs/native/dune__exe__Cast.cmx .main.eobjs/native/dune__exe__Cparser.cmx .main.eobjs/native/dune__exe__Clexer.cmx .main.eobjs/native/dune__exe__Pretty.cmx .main.eobjs/native/dune__exe__Usage.cmx .main.eobjs/native/dune__exe__Main.cmx)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamllex -q -o clexer.ml clexer.mll)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/menhir -v cparser.mly --base cparser --infer-write-query cparser__mock.ml.mock)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl ctyping.ml) > _build/default/.main.eobjs/ctyping.ml.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl cast.ml) > _build/default/.main.eobjs/cast.ml.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl pretty.ml) > _build/default/.main.eobjs/pretty.ml.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl main.ml) > _build/default/.main.eobjs/main.ml.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl usage.ml) > _build/default/.main.eobjs/usage.ml.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl clexer.ml) > _build/default/.main.eobjs/clexer.ml.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -intf cast.mli) > _build/default/.main.eobjs/cast.mli.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl cparser__mock.ml.mock) > _build/default/.main.eobjs/cparser__mock.ml.mock.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -intf tast.mli) > _build/default/.main.eobjs/tast.mli.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -o .main.eobjs/byte/dune__exe.cmo -c -impl .main.eobjs/dune__exe.ml-gen)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cast.cmi -c -intf cast.mli)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -I .main.eobjs/byte -open Dune__exe -short-paths -i -impl cparser__mock.ml.mock) > _build/default/cparser__mock.mli.inferred
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/menhir -v cparser.mly --base cparser --infer-read-reply cparser__mock.mli.inferred)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -intf cparser.mli) > _build/default/.main.eobjs/cparser.mli.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl cparser.ml) > _build/default/.main.eobjs/cparser.ml.d
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cparser.cmi -c -intf cparser.mli)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Tast.cmi -c -intf tast.mli)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Clexer.cmo -c -impl clexer.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Pretty.cmo -c -impl pretty.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml-gen -no-alias-deps -opaque -o .main.eobjs/native/dune__exe.cmx -c -impl .main.eobjs/dune__exe.ml-gen)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cast.cmx -c -impl cast.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Usage.cmo -c -impl usage.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Clexer.cmx -c -impl clexer.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Main.cmo -c -impl main.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Usage.cmx -c -impl usage.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Main.cmx -c -impl main.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Pretty.cmx -c -impl pretty.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cparser.cmx -c -impl cparser.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -o main.exe .main.eobjs/native/dune__exe.cmx .main.eobjs/native/dune__exe__Cast.cmx .main.eobjs/native/dune__exe__Cparser.cmx .main.eobjs/native/dune__exe__Clexer.cmx .main.eobjs/native/dune__exe__Pretty.cmx .main.eobjs/native/dune__exe__Usage.cmx .main.eobjs/native/dune__exe__Main.cmx)
