@@ -9,6 +9,9 @@ module Clexer = Dune__exe__Clexer
 (** @canonical Dune__exe.Cparser *)
 module Cparser = Dune__exe__Cparser
 
+(** @canonical Dune__exe.Ctyping *)
+module Ctyping = Dune__exe__Ctyping
+
 (** @canonical Dune__exe.Main *)
 module Main = Dune__exe__Main
 

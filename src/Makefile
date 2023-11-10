@@ -7,7 +7,7 @@ $(EXE): *.ml*
 	dune build @all
 	cp $(EXE) ccomp
 
-test: $(EXE) test.c
+test: $(EXE) test00.c
 	./ccomp --debug test.c
 	# lc2as test.s 
 	# gcc -o test.exe test.c

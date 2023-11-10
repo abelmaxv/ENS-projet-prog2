@@ -1,10 +1,10 @@
-# dune build @all
+# dune build
 # OCAMLPARAM: unset
 # Shared cache: disabled
 # Workspace root:
 # /users/dptinfo/verley/Documents/programmation/ENS-projet-prog2/src
 # Auto-detected concurrency: 8
-$ /usr/bin/ocamlc.opt -config > /tmp/dune_ee71c7_output
+$ /usr/bin/ocamlc.opt -config > /tmp/dune_d89ce5_output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -151,33 +151,21 @@ $ /usr/bin/ocamlc.opt -config > /tmp/dune_ee71c7_output
 #      ; windows_unicode = false
 #      }
 #  }
-$ (cd _build/default && /users/dptinfo/verley/.opam/default/bin/menhir -v cparser.mly --base cparser --infer-write-query cparser__mock.ml.mock)
-$ (cd _build/default && /usr/bin/ocamllex -q -o clexer.ml clexer.mll)
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl main.ml) > _build/default/.main.eobjs/dune__exe__Main.impl.d
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl pretty.ml) > _build/default/.main.eobjs/dune__exe__Pretty.impl.d
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl clexer.ml) > _build/default/.main.eobjs/dune__exe__Clexer.impl.d
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl usage.ml) > _build/default/.main.eobjs/dune__exe__Usage.impl.d
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl cparser__mock.ml.mock) > _build/default/.main.eobjs/cparser__mock.impl.d
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -intf cast.mli) > _build/default/.main.eobjs/dune__exe__Cast.intf.d
 $ (cd _build/default && /usr/bin/ocamldep.opt -modules -intf tast.mli) > _build/default/.main.eobjs/dune__exe__Tast.intf.d
 $ (cd _build/default && /usr/bin/ocamlc.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -o .main.eobjs/byte/dune__exe.cmo -c -impl .main.eobjs/dune__exe.ml-gen)
 $ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cast.cmi -c -intf cast.mli)
-$ (cd _build/.sandbox/44cc6f04bd009b7258c6562e8d2036e5/default && /usr/bin/ocamlc.opt -g -I .main.eobjs/byte -open Dune__exe -short-paths -i -impl cparser__mock.ml.mock) > _build/.sandbox/44cc6f04bd009b7258c6562e8d2036e5/default/cparser__mock.mli.inferred
-$ (cd _build/default && /users/dptinfo/verley/.opam/default/bin/menhir -v cparser.mly --base cparser --infer-read-reply cparser__mock.mli.inferred)
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -intf cparser.mli) > _build/default/.main.eobjs/dune__exe__Cparser.intf.d
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl cast.ml) > _build/default/.main.eobjs/dune__exe__Cast.impl.d
-$ (cd _build/default && /usr/bin/ocamldep.opt -modules -impl cparser.ml) > _build/default/.main.eobjs/dune__exe__Cparser.impl.d
+$ (cd _build/.sandbox/ee84e720949b78a1125a5f9023cca0a0/default && /usr/bin/ocamlc.opt -g -I .main.eobjs/byte -open Dune__exe -short-paths -i -impl cparser__mock.ml.mock) > _build/.sandbox/ee84e720949b78a1125a5f9023cca0a0/default/cparser__mock.mli.inferred
 $ (cd _build/default && /usr/bin/ocamlopt.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml-gen -no-alias-deps -opaque -o .main.eobjs/native/dune__exe.cmx -c -impl .main.eobjs/dune__exe.ml-gen)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cparser.cmi -c -intf cparser.mli)
 $ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Tast.cmi -c -intf tast.mli)
+$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cparser.cmi -c -intf cparser.mli)
 $ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cast.cmx -c -impl cast.ml)
-$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Clexer.cmo -c -impl clexer.ml)
 $ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Pretty.cmo -c -impl pretty.ml)
+$ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Clexer.cmo -c -impl clexer.ml)
 $ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Usage.cmo -c -impl usage.ml)
+$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Pretty.cmx -c -impl pretty.ml)
+$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Clexer.cmx -c -impl clexer.ml)
 $ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Usage.cmx -c -impl usage.ml)
 $ (cd _build/default && /usr/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Main.cmo -c -impl main.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Clexer.cmx -c -impl clexer.ml)
-$ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Pretty.cmx -c -impl pretty.ml)
 $ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Main.cmx -c -impl main.ml)
 $ (cd _build/default && /usr/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cparser.cmx -c -impl cparser.ml)
 $ (cd _build/default && /usr/bin/ocamlopt.opt -g -o main.exe .main.eobjs/native/dune__exe.cmx .main.eobjs/native/dune__exe__Cast.cmx .main.eobjs/native/dune__exe__Cparser.cmx .main.eobjs/native/dune__exe__Clexer.cmx .main.eobjs/native/dune__exe__Pretty.cmx .main.eobjs/native/dune__exe__Usage.cmx .main.eobjs/native/dune__exe__Main.cmx)
