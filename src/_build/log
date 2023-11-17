@@ -2,10 +2,10 @@
 # OCAMLPARAM: unset
 # Workspace root:
 # /Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src
-$ /usr/bin/getconf _NPROCESSORS_ONLN > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/duneb5fa84.output 2> /dev/null
+$ /usr/bin/getconf _NPROCESSORS_ONLN > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunebd3c0b.output 2> /dev/null
 # Auto-detected concurrency: 4
 # disable binary cache
-$ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dune071dde.output
+$ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunec4f817.output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -39,6 +39,8 @@ $ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vs
 #            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src/_build/install/default/lib"
 #        ; "OCAMLTOP_INCLUDE_PATH" :
 #            "/Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src/_build/install/default/lib/toplevel"
+#        ; "OCAML_COLOR" : "always"
+#        ; "OPAMCOLOR" : "always"
 #        }
 #  ; findlib_path = [ External "/Users/abelverley/.opam/4.07.1/lib" ]
 #  ; arch_sixtyfour = true
@@ -112,6 +114,6 @@ $ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vs
 #      }
 #  }
 $ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl ctyping.ml) > _build/default/.main.eobjs/ctyping.ml.d
-> File "ctyping.ml", line 66, characters 0-0:
+> File "ctyping.ml", line 224, characters 44-44:
 > Error: Syntax error
 [2]

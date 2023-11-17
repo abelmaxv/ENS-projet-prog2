@@ -27,6 +27,7 @@ sig
   val get_args_types : string -> ctyp list
 end
 
+(* Est ce que ça ne serait pas mieux avec une table de Hashage ? *)
 module Env : Env_s = 
 struct 
   type var_declaration_loc = {var : var_declaration; global : bool} (* Status is True iff the declaration is global *)
@@ -95,21 +96,49 @@ let check_mon_op mon_op typ  =
       begin
         match typ with
         | TPTR _ -> typ
-        | _ -> raise (Type_Error "Types are not corresponding in MON_OP") 
+        | _ -> raise (Type_Error "Types are not corresponding in MON_OP") (* TO MODIFY *)
       end
 
-(* TO DO *)
+
 let check_bin_op bin_op typ1 typ2 = 
   match bin_op with
-    | S_MUL | S_DIV | S_MOD ->
+    | S_MUL | S_DIV | S_MOD -> 
+      if (typ1 = TINT && typ2 = TINT ) then
+        TINT
+      else 
+        raise (Type_Error "Types are not corresponding in BIN_OP ") (* TO MODIFY *)
     | S_ADD -> 
-    | S_SUB -> 
-    | _ -> 
+      begin
+        match typ1, typ2 with
+        | TINT, TINT -> TINT
+        | TPTR t, TINT -> TPTR t
+        | _ -> raise (Type_Error "Types are not corresponding in BIN_OP ") (* TO MODIFY *)
+      end 
+    | S_SUB ->
+      begin
+        match typ1, typ2 with
+        | TINT, TINT -> TINT
+        | TPTR t, TINT -> TPTR t
+        | TPTR t1, TPTR t2 when t1 = t2 -> TPTR t1
+        | _ -> raise (Type_Error "Types are not corresponding in BIN_OP ") (* TO MODIFY *)
+      end 
+
+let check_cmp cmp_op typ1 typ2 = 
+  match cmp_op with
+  | C_LT   | C_LE ->
+    if (typ1 = TINT && typ2 = TINT) then TINT
+    else raise (Type_Error "Types are not corresponding in CMP ") (* TO MODIFY *)
+  | C_EQ -> 
+    if (typ1 = typ2) then typ1
+    else raise (Type_Error "Types are not corresponding in CMP ") (* TO MODIFY *)
 
 
 let rec check_loc_expr le =
   let (_, exp) = le in
   check_expr exp
+(* Rajouter la verification de valeur gauche *)
+(* Rajouter la verification de presence d'un return *)
+(* Rajouter le traitement d'un pointeur null ? *)
 (* TO DO *)
 and check_expr exp = match exp with
   | VAR s -> get_type s
@@ -143,9 +172,26 @@ and check_expr exp = match exp with
     let typ1 = check_loc_expr le1 in
     let typ2 = check_loc_expr le2 in 
     check_bin_op b_op typ1 typ2
-  | CMP (c_op, le1, le2) ->
-  | EIF (le1, le2, le3) ->
-  | ESEQ le_list
+  | CMP (cmp_op, le1, le2) ->
+    let typ1 = check_loc_expr le1 in
+    let typ2 = check_loc_expr le2 in
+    check_cmp cmp_op typ1 typ2
+  | EIF (le1, le2, le3) -> 
+    let typ1 = check_loc_expr le1 in
+    let typ2 = check_loc_expr le2 in
+    let typ3 = check_loc_expr le3 in
+    begin
+      match typ1, typ2, typ3 with
+      | TINT, t1, t2 when t1 = t2 -> t1
+      | _ -> raise (Type_Error "Types are not correspondong in EIF") (* TO MODIFY *)
+    end
+  | ESEQ le_list ->
+    let l = List.rev (List.map check_loc_expr le_list) in
+    begin 
+      match l with
+      | [] -> TINT
+      | h::t -> h 
+    end
 
 
 let rec check_var_declaration v = match v with
@@ -160,19 +206,19 @@ and check_loc_code l_code =
   check_code c
 
 and check_code code = match code with 
-    | CBLOCK (decs, codes) -> 
+    | CBLOCK (decs, loc_codes) -> 
       List.iter check_var_declaration decs; 
-      List.iter check_code codes
+      List.iter check_loc_code loc_codes
     | CEXPR e -> 
       check_loc_expr e
     | CIF (le, lc1, lc2) -> 
-      check_loc_expr le;
-      check_loc_code lc1;
-      check_loc_code lc2
+      check_loc_expr le 
+      check_loc_code lc1
+      let check_loc_code lc2
     | CWHILE (le, lc) ->
       check_loc_expr le;
       check_loc_code lc
     | CRETURN le_opt -> (* TO DO *)
 
 
-(* TO DO : checkfile with global variable *)
+(* TO DO : check_file with global variable *)
