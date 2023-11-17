@@ -7,9 +7,12 @@
 *__________________________________________________________________
 *)
 
+(* Ce programme effectue une verification de type sans produire un arbre syntaxique type *)
+
 open Cast
 
 (*______________ DEFINITION OF AN ENVIRONMENT (Stack) ______________ *)
+
 module type Env_s = 
 sig
   type var_declaration_loc
@@ -20,6 +23,8 @@ sig
   val push : var_declaration_loc -> unit
   val pop : unit  -> var_declaration
   val get_elmt : string -> var_declaration
+  val get_type : string -> ctyp
+  val get_args_types : string -> ctyp list
 end
 
 module Env : Env_s = 
@@ -47,6 +52,10 @@ struct
 
   let pop () = (Stack.pop env).var
 
+  let get_type_decl d = match d with
+    | CDECL (_, _, typ) -> typ
+    | CFUN (_, _, _, typ, _) -> typ
+
   let get_elmt s = 
     let rec get_elmt_aux stack = 
       let v_loc = Stack.pop stack in
@@ -57,43 +66,99 @@ struct
       | _ -> failwith "Name absent in env"
     in 
     get_elmt_aux env
+
+  let get_type s = get_type_decl (get_elmt s)
+
+  let get_args_types s = 
+    match get_elmt s with 
+    | CDECL _ -> failwith "Trying to get arguments a variable declaration"
+    | CFUN (_, _, l, _, _) -> List.map get_type_decl l
 end
 
-open Env
 
 
 
 
 (*______________ FUNCTIONS FOR TYPE CHECKING ______________*)
+open Env
+exception Type_Error of string
 
-let check_loc_expr le =
+let check_mon_op mon_op typ  = 
+  match mon_op with
+    | M_MINUS | M_NOT | M_POST_INC | M_POST_DEC | M_PRE_INC | M_PRE_DEC  -> 
+      begin 
+        match typ with 
+        | TINT -> typ
+        | _ -> raise (Type_Error "Types are not corresponding in MON_OP")
+      end
+    | M_DEREF | M_ADDR  -> 
+      begin
+        match typ with
+        | TPTR _ -> typ
+        | _ -> raise (Type_Error "Types are not corresponding in MON_OP") 
+      end
+
+(* TO DO *)
+let check_bin_op bin_op typ1 typ2 = 
+  match bin_op with
+    | S_MUL | S_DIV | S_MOD ->
+    | S_ADD -> 
+    | S_SUB -> 
+    | _ -> 
+
+
+let rec check_loc_expr le =
   let (_, exp) = le in
   check_expr exp
 (* TO DO *)
 and check_expr exp = match exp with
-  | VAR s -> TINT
+  | VAR s -> get_type s
   | CST n -> TINT
   | STRING s -> TPTR TINT
   | SET_VAR (s, le) -> 
-  | SET_VAL (s, le) ->
-  | CALL (s, le_list) ->
-  | OP1 (m_op, le) ->
+    let typ1 = check_loc_expr le in
+    let typ2 = get_type s in
+    if typ1 = typ2 then 
+      typ1
+    else
+      raise (Type_Error "Types are not corresponding in SET_VAR") (* TO MODIFY *)
+  | SET_VAL (s, le) -> 
+    let typ1 = check_loc_expr le in
+    begin
+    match get_type s with 
+    |TPTR t when t = typ1 -> typ1
+    |_ -> raise(Type_Error "Types are not corresponding in SET_VAL") (* TO MODIFY *)
+    end 
+  | CALL (s, le_list) -> 
+    let le_typs = List.map check_loc_expr le_list in
+    let args_typs = get_args_types s in
+    if le_typs = args_typs then
+      get_type s
+    else
+      raise (Type_Error "Types are not correspondong in CALL") (* TO MODIFY *)
+  | OP1 (m_op, le) -> 
+    let typ = check_loc_expr le in
+    check_mon_op m_op typ
   | OP2 (b_op, le1, le2) ->
+    let typ1 = check_loc_expr le1 in
+    let typ2 = check_loc_expr le2 in 
+    check_bin_op b_op typ1 typ2
   | CMP (c_op, le1, le2) ->
   | EIF (le1, le2, le3) ->
   | ESEQ le_list
 
 
 let rec check_var_declaration v = match v with
- |CDECL (pos, name, t) -> 
+ | CDECL (pos, name, t) -> 
     push (var_declaration_loc_create v false)
- |CFUN (pos, name, args, t, l_code) -> 
+ | CFUN (pos, name, args, t, l_code) -> 
     List.iter check_var_declaration args; 
     check_loc_code l_code
 
 and check_loc_code l_code = 
   let (_,c) = l_code in
   check_code c
+
 and check_code code = match code with 
     | CBLOCK (decs, codes) -> 
       List.iter check_var_declaration decs; 
@@ -108,3 +173,6 @@ and check_code code = match code with
       check_loc_expr le;
       check_loc_code lc
     | CRETURN le_opt -> (* TO DO *)
+
+
+(* TO DO : checkfile with global variable *)
