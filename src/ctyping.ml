@@ -201,10 +201,10 @@ and check_expr exp = match exp with
     end
 
 let check_return le_opt = 
-  let (_, opt)  = le_opt in
-    match opt with
-      | None -> TINT
-      | Some e -> check_expr e
+  match le_opt with
+  | None -> TINT (* A TRAITER *)
+  | Some le -> check_loc_expr le
+
 
 let rec check_var_declaration v = match v with
  | CDECL (pos, name, typ) -> 
@@ -240,4 +240,12 @@ and check_code code = match code with
       check_return le_opt
 
 
-(* TO DO : check_file with global variable *)
+let check_var_declaration_init v = match v with
+| CDECL (pos, name, typ) -> 
+   push (var_declaration_loc_create v true); typ
+| CFUN (pos, name, args, typ, l_code) -> 
+   let _ = List.map check_var_declaration args in
+   let _ = check_loc_code l_code in
+   typ
+
+let check_file var_dec_l = List.map check_var_declaration_init var_dec_l

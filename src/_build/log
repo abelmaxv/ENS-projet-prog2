@@ -2,10 +2,10 @@
 # OCAMLPARAM: unset
 # Workspace root:
 # /Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src
-$ /usr/bin/getconf _NPROCESSORS_ONLN > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/duneabe50c.output 2> /dev/null
+$ /usr/bin/getconf _NPROCESSORS_ONLN > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunec09a1b.output 2> /dev/null
 # Auto-detected concurrency: 4
 # disable binary cache
-$ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunebc6d3a.output
+$ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/duned2258e.output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -113,18 +113,7 @@ $ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vs
 #      ; windows_unicode = false
 #      }
 #  }
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl ctyping.ml) > _build/default/.main.eobjs/ctyping.ml.d
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Tast.cmi -c -intf tast.mli)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Cparser.cmi -c -intf cparser.mli)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Pretty.cmo -c -impl pretty.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Clexer.cmo -c -impl clexer.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -w -49 -nopervasives -nostdlib -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml-gen -no-alias-deps -opaque -o .main.eobjs/native/dune__exe.cmx -c -impl .main.eobjs/dune__exe.ml-gen)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cast.cmx -c -impl cast.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Pretty.cmx -c -impl pretty.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Usage.cmo -c -impl usage.ml)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl main.ml) > _build/default/.main.eobjs/main.ml.d
 $ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Main.cmo -c -impl main.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Usage.cmx -c -impl usage.ml)
 $ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Main.cmx -c -impl main.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Clexer.cmx -c -impl clexer.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Cparser.cmx -c -impl cparser.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -o main.exe .main.eobjs/native/dune__exe.cmx .main.eobjs/native/dune__exe__Cast.cmx .main.eobjs/native/dune__exe__Cparser.cmx .main.eobjs/native/dune__exe__Clexer.cmx .main.eobjs/native/dune__exe__Pretty.cmx .main.eobjs/native/dune__exe__Usage.cmx .main.eobjs/native/dune__exe__Main.cmx)
+$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -o main.exe .main.eobjs/native/dune__exe.cmx .main.eobjs/native/dune__exe__Cast.cmx .main.eobjs/native/dune__exe__Cparser.cmx .main.eobjs/native/dune__exe__Clexer.cmx .main.eobjs/native/dune__exe__Ctyping.cmx .main.eobjs/native/dune__exe__Pretty.cmx .main.eobjs/native/dune__exe__Usage.cmx .main.eobjs/native/dune__exe__Main.cmx)

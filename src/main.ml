@@ -7,6 +7,7 @@ open Lexing
 open Clexer
 open Cparser
 open Usage
+open Ctyping
 
 let () =
   let c = open_in file in
@@ -23,19 +24,17 @@ let () =
 
     if !Usage.parse_only then exit 0;
 
-    (* TO CONTINUE *)
-    eprintf "Not yet implemented!\n@.";
-    exit 2
-
-(*  TO UNCOMMENT
-    let f = Typing.file ~debug f in
-
+    let _ = Ctyping.check_file f in 
+    ()
+    (*
     if Usage.debug then begin
       let ast_dot_file = open_out (Filename.chop_suffix file ".c" ^ "_tast.dot") in
       Printf.fprintf ast_dot_file "%s" (Pretty.get_dot_tast f (not !no_pretty));
       close_out ast_dot_file
     end;
+    *)
 
+(*  TO UNCOMMENT
     if !Usage.type_only then exit 0;
 
     let code = Compile.file ~debug f in
@@ -53,6 +52,12 @@ let () =
     | Cparser.Error ->
       report_loc (lexeme_start_p lb, lexeme_end_p lb);
       eprintf "Syntax error\n@.";
+      exit 1
+    | Ctyping.Env.Already_Declared_Error msg -> (* TO ADD : LOC *)
+      eprintf "Aldready declared error : %s\n@." msg;
+      exit 1
+    | Ctyping.Type_Error msg ->  (* TO ADD : LOC *)
+      eprintf "Type error : %s\n@." msg;
       exit 1
 (*
     | Typing.Error (l, msg) ->
