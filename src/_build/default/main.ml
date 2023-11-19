@@ -16,11 +16,14 @@ let () =
     let f = Cparser.file Clexer.ctoken lb in
     close_in c;
 
+(*    
     if Usage.debug then begin
       let ast_dot_file = open_out (Filename.chop_suffix file ".c" ^ "_ast.dot") in
       Printf.fprintf ast_dot_file "%s" (Pretty.get_dot_ast f (not !no_pretty));
       close_out ast_dot_file
     end;
+*)
+
 
     if !Usage.parse_only then exit 0;
 
@@ -53,10 +56,12 @@ let () =
       report_loc (lexeme_start_p lb, lexeme_end_p lb);
       eprintf "Syntax error\n@.";
       exit 1
-    | Ctyping.Env.Already_Declared_Error msg -> (* TO ADD : LOC *)
+    | Ctyping.Env.Already_Declared_Error (l,msg) -> 
+      report_loc l;
       eprintf "Aldready declared error : %s\n@." msg;
       exit 1
-    | Ctyping.Type_Error msg ->  (* TO ADD : LOC *)
+    | Ctyping.Type_Error (l, msg) -> 
+      report_loc l; 
       eprintf "Type error : %s\n@." msg;
       exit 1
 (*

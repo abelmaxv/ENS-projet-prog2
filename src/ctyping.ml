@@ -7,7 +7,7 @@
 *__________________________________________________________________
 *)
 
-(* Ce programme effectue une verification de type sans produire un arbre syntaxique type *)
+(* Ce programme effectue une verification de type (sans produire un arbre syntaxique type) *)
 
 open Cast
 
@@ -17,7 +17,7 @@ module type Env_s =
 sig
   type var_declaration_loc
   type env_t
-  exception Already_Declared_Error of string
+  exception Already_Declared_Error of location * string
   val var_declaration_loc_create : var_declaration -> bool -> var_declaration_loc
   val env : env_t 
   val push : var_declaration_loc -> unit
@@ -32,7 +32,7 @@ module Env : Env_s =
 struct 
   type var_declaration_loc = {var : var_declaration; global : bool} (* Status is True iff the declaration is global *)
   type env_t = var_declaration_loc Stack.t 
-  exception Already_Declared_Error of string
+  exception Already_Declared_Error of location * string
 
   let var_declaration_loc_create v b = {var = v; global = b}
   
@@ -41,11 +41,11 @@ struct
   let push v =
     let name_identification elmt = match v.var, elmt.var with
       (* Error if a global variable is already declared *)
-      | CDECL(_, name1, _), CDECL(_, name2, _) when name1 = name2 -> 
-        if elmt.global then raise (Already_Declared_Error "Variable at line was already defined global at line") 
+      | CDECL(l, name1, _), CDECL(_, name2, _) when name1 = name2 -> 
+        if elmt.global then raise (Already_Declared_Error (l, "Variable at line was already declared global")) 
       (* Error if a function is already declared*)
-      | CFUN (_, name1, _, _, _), CFUN(_, name2, _,_, _) when name1 = name2 -> 
-        raise (Already_Declared_Error "Function was already defined")
+      | CFUN (l, name1, _, _, _), CFUN(_, name2, _,_, _) when name1 = name2 -> 
+        raise (Already_Declared_Error (l,"Function was already declared"))
       |_ -> ()
     in 
     Stack.iter name_identification env;
@@ -80,39 +80,49 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+
 (*______________ FUNCTIONS FOR TYPE CHECKING ______________*)
 open Env
-exception Type_Error of string
+exception Type_Error of location * string
 
-let check_mon_op mon_op typ  = 
+let check_mon_op mon_op typ l = 
   match mon_op with
     | M_MINUS | M_NOT | M_POST_INC | M_POST_DEC | M_PRE_INC | M_PRE_DEC  -> 
       begin 
         match typ with 
         | TINT -> typ
-        | _ -> raise (Type_Error "Types are not corresponding in MON_OP")
+        | _ -> raise (Type_Error (l, "Types are not corresponding in MON_OP"))
       end
     | M_DEREF | M_ADDR  -> 
       begin
         match typ with
         | TPTR _ -> typ
-        | _ -> raise (Type_Error "Types are not corresponding in MON_OP") (* TO MODIFY *)
+        | _ -> raise (Type_Error (l,"Types are not corresponding in MON_OP")) 
       end
 
 
-let check_bin_op bin_op typ1 typ2 = 
+let check_bin_op bin_op typ1 typ2 l = 
   match bin_op with
     | S_MUL | S_DIV | S_MOD -> 
       if (typ1 = TINT && typ2 = TINT ) then
         TINT
       else 
-        raise (Type_Error "Types are not corresponding in BIN_OP ") (* TO MODIFY *)
+        raise (Type_Error (l, "Types are not corresponding in BIN_OP ")) 
     | S_ADD -> 
       begin
         match typ1, typ2 with
         | TINT, TINT -> TINT
         | TPTR t, TINT -> TPTR t
-        | _ -> raise (Type_Error "Types are not corresponding in BIN_OP ") (* TO MODIFY *)
+        | _ -> raise (Type_Error (l,"Types are not corresponding in BIN_OP ")) 
       end 
     | S_SUB ->
       begin
@@ -120,38 +130,37 @@ let check_bin_op bin_op typ1 typ2 =
         | TINT, TINT -> TINT
         | TPTR t, TINT -> TPTR t
         | TPTR t1, TPTR t2 when t1 = t2 -> TPTR t1
-        | _ -> raise (Type_Error "Types are not corresponding in BIN_OP ") (* TO MODIFY *)
+        | _ -> raise (Type_Error (l,"Types are not corresponding in BIN_OP ")) 
       end 
 
-let check_cmp cmp_op typ1 typ2 = 
+let check_cmp cmp_op typ1 typ2 l = 
   match cmp_op with
   | C_LT   | C_LE ->
     if (typ1 = TINT && typ2 = TINT) then TINT
-    else raise (Type_Error "Types are not corresponding in CMP ") (* TO MODIFY *)
+    else raise (Type_Error (l,"Types are not corresponding in CMP ")) 
   | C_EQ -> 
     if (typ1 = typ2) then typ1
-    else raise (Type_Error "Types are not corresponding in CMP ") (* TO MODIFY *)
+    else raise (Type_Error (l,"Types are not corresponding in CMP ")) 
 
-let check_if typ1 typ2 typ3 = 
+let check_if typ1 typ2 typ3 l = 
   match typ1, typ2, typ3 with
   | TINT, t1, t2 when t1 = t2 -> t1
-  | _ -> raise (Type_Error "Types are not correspondong in EIF") (* TO MODIFY *)
+  | _ -> raise (Type_Error (l, "Types are not correspondong in EIF")) 
 
 
-let check_while typ1 typ2 = 
+let check_while typ1 typ2 l  = 
   match typ1 with
   | TINT -> typ2 
-  | _ -> raise (Type_Error "Types are not correspondong in WHILE") (* TO MODIFY *)
+  | _ -> raise (Type_Error (l,"Type is not correspondong in WHILE"))
 
 
 let rec check_loc_expr le =
-  let (_, exp) = le in
-  check_expr exp
+  let (l, exp) = le in
+  check_expr exp l 
 (* Rajouter la verification de valeur gauche *)
 (* Rajouter la verification de presence d'un return *)
 (* Rajouter le traitement d'un pointeur null ??? *)
-(* TO DO *)
-and check_expr exp = match exp with
+and check_expr exp l = match exp with
   | VAR s -> get_type s
   | CST n -> TINT
   | STRING s -> TPTR TINT
@@ -161,13 +170,13 @@ and check_expr exp = match exp with
     if typ1 = typ2 then 
       typ1
     else
-      raise (Type_Error "Types are not corresponding in SET_VAR") (* TO MODIFY *)
+      raise (Type_Error (l, "Types are not corresponding in SET_VAR"))
   | SET_VAL (s, le) -> 
     let typ1 = check_loc_expr le in
     begin
     match get_type s with 
     |TPTR t when t = typ1 -> typ1
-    |_ -> raise(Type_Error "Types are not corresponding in SET_VAL") (* TO MODIFY *)
+    |_ -> raise(Type_Error (l, "Types are not corresponding in SET_VAL")) 
     end 
   | CALL (s, le_list) -> 
     let le_typs = List.map check_loc_expr le_list in
@@ -175,23 +184,23 @@ and check_expr exp = match exp with
     if le_typs = args_typs then
       get_type s
     else
-      raise (Type_Error "Types are not correspondong in CALL") (* TO MODIFY *)
+      raise (Type_Error (l,"Types are not correspondong in CALL")) 
   | OP1 (m_op, le) -> 
     let typ = check_loc_expr le in
-    check_mon_op m_op typ
+    check_mon_op m_op typ l
   | OP2 (b_op, le1, le2) ->
     let typ1 = check_loc_expr le1 in
     let typ2 = check_loc_expr le2 in 
-    check_bin_op b_op typ1 typ2
+    check_bin_op b_op typ1 typ2 l
   | CMP (cmp_op, le1, le2) ->
     let typ1 = check_loc_expr le1 in
     let typ2 = check_loc_expr le2 in
-    check_cmp cmp_op typ1 typ2
+    check_cmp cmp_op typ1 typ2 l
   | EIF (le1, le2, le3) -> 
     let typ1 = check_loc_expr le1 in
     let typ2 = check_loc_expr le2 in
     let typ3 = check_loc_expr le3 in
-    check_if typ1 typ2 typ3
+    check_if typ1 typ2 typ3 l
   | ESEQ le_list ->
     let l = List.rev (List.map check_loc_expr le_list) in
     begin 
@@ -231,11 +240,13 @@ and check_code code = match code with
       let typ1 = check_loc_expr le in 
       let typ2 = check_loc_code lc1 in
       let typ3 = check_loc_code lc2 in
-      check_if typ1 typ2 typ3
+      let (l,_) = le in
+      check_if typ1 typ2 typ3 l
     | CWHILE (le, lc) ->
       let typ1 = check_loc_expr le in
       let typ2 = check_loc_code lc in
-      check_while typ1 typ2
+      let (l,_) = le in 
+      check_while typ1 typ2 l
     | CRETURN le_opt -> 
       check_return le_opt
 

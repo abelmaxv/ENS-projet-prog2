@@ -2,10 +2,10 @@
 # OCAMLPARAM: unset
 # Workspace root:
 # /Users/abelverley/Documents/Cours/1A/Info/Programmation/ENS-projet-prog2/src
-$ /usr/bin/getconf _NPROCESSORS_ONLN > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunec09a1b.output 2> /dev/null
+$ /usr/bin/getconf _NPROCESSORS_ONLN > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/dunee026af.output 2> /dev/null
 # Auto-detected concurrency: 4
 # disable binary cache
-$ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/duned2258e.output
+$ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vstd6xl2nn0n_6h7pl800000gn/T/duned89caa.output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -113,7 +113,3 @@ $ /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -config > /var/folders/0b/m8n2vs
 #      ; windows_unicode = false
 #      }
 #  }
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamldep.opt -modules -impl main.ml) > _build/default/.main.eobjs/main.ml.d
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlc.opt -g -bin-annot -I .main.eobjs/byte -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/byte/dune__exe__Main.cmo -c -impl main.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -I .main.eobjs/byte -I .main.eobjs/native -intf-suffix .ml -no-alias-deps -opaque -open Dune__exe -o .main.eobjs/native/dune__exe__Main.cmx -c -impl main.ml)
-$ (cd _build/default && /Users/abelverley/.opam/4.07.1/bin/ocamlopt.opt -g -o main.exe .main.eobjs/native/dune__exe.cmx .main.eobjs/native/dune__exe__Cast.cmx .main.eobjs/native/dune__exe__Cparser.cmx .main.eobjs/native/dune__exe__Clexer.cmx .main.eobjs/native/dune__exe__Ctyping.cmx .main.eobjs/native/dune__exe__Pretty.cmx .main.eobjs/native/dune__exe__Usage.cmx .main.eobjs/native/dune__exe__Main.cmx)
