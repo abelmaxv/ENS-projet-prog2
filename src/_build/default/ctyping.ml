@@ -132,13 +132,24 @@ let check_cmp cmp_op typ1 typ2 =
     if (typ1 = typ2) then typ1
     else raise (Type_Error "Types are not corresponding in CMP ") (* TO MODIFY *)
 
+let check_if typ1 typ2 typ3 = 
+  match typ1, typ2, typ3 with
+  | TINT, t1, t2 when t1 = t2 -> t1
+  | _ -> raise (Type_Error "Types are not correspondong in EIF") (* TO MODIFY *)
+
+
+let check_while typ1 typ2 = 
+  match typ1 with
+  | TINT -> typ2 
+  | _ -> raise (Type_Error "Types are not correspondong in WHILE") (* TO MODIFY *)
+
 
 let rec check_loc_expr le =
   let (_, exp) = le in
   check_expr exp
 (* Rajouter la verification de valeur gauche *)
 (* Rajouter la verification de presence d'un return *)
-(* Rajouter le traitement d'un pointeur null ? *)
+(* Rajouter le traitement d'un pointeur null ??? *)
 (* TO DO *)
 and check_expr exp = match exp with
   | VAR s -> get_type s
@@ -180,11 +191,7 @@ and check_expr exp = match exp with
     let typ1 = check_loc_expr le1 in
     let typ2 = check_loc_expr le2 in
     let typ3 = check_loc_expr le3 in
-    begin
-      match typ1, typ2, typ3 with
-      | TINT, t1, t2 when t1 = t2 -> t1
-      | _ -> raise (Type_Error "Types are not correspondong in EIF") (* TO MODIFY *)
-    end
+    check_if typ1 typ2 typ3
   | ESEQ le_list ->
     let l = List.rev (List.map check_loc_expr le_list) in
     begin 
@@ -193,32 +200,44 @@ and check_expr exp = match exp with
       | h::t -> h 
     end
 
+let check_return le_opt = 
+  let (_, opt)  = le_opt in
+    match opt with
+      | None -> TINT
+      | Some e -> check_expr e
 
 let rec check_var_declaration v = match v with
- | CDECL (pos, name, t) -> 
-    push (var_declaration_loc_create v false)
- | CFUN (pos, name, args, t, l_code) -> 
-    List.iter check_var_declaration args; 
-    check_loc_code l_code
+ | CDECL (pos, name, typ) -> 
+    push (var_declaration_loc_create v false); typ
+ | CFUN (pos, name, args, typ, l_code) -> 
+    let _ = List.map check_var_declaration args in
+    let _ = check_loc_code l_code in
+    typ
+
 
 and check_loc_code l_code = 
   let (_,c) = l_code in
   check_code c
 
+
 and check_code code = match code with 
-    | CBLOCK (decs, codes) -> 
-      List.iter check_var_declaration decs; 
-      List.iter check_code codes
+    | CBLOCK (decs, loc_codes) -> 
+      let _ = List.map check_var_declaration decs in 
+      let l = List.map check_loc_code loc_codes in
+      List.hd (List.rev l)
     | CEXPR e -> 
       check_loc_expr e
     | CIF (le, lc1, lc2) -> 
-      check_loc_expr le;
-      check_loc_code lc1;
-      check_loc_code lc2
+      let typ1 = check_loc_expr le in 
+      let typ2 = check_loc_code lc1 in
+      let typ3 = check_loc_code lc2 in
+      check_if typ1 typ2 typ3
     | CWHILE (le, lc) ->
-      check_loc_expr le;
-      check_loc_code lc
-    | CRETURN le_opt -> (* TO DO *)
+      let typ1 = check_loc_expr le in
+      let typ2 = check_loc_code lc in
+      check_while typ1 typ2
+    | CRETURN le_opt -> 
+      check_return le_opt
 
 
-(* TO DO : checkfile with global variable *)
+(* TO DO : check_file with global variable *)
