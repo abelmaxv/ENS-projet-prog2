@@ -7,7 +7,7 @@
 *__________________________________________________________________
 *)
 
-(* Ce programme effectue une verification de type *)
+(* Ce programme effectue une verification de type et renvoie un arbre syntaique type *)
 
 (* STRUCTURE DU PROGRAMME : 
    I- DEFINITION D'UNE STRUCTURE DE DONNEE POUR L'ENVIRONNEMENT
@@ -39,7 +39,6 @@ end
 
 
 
-(* Est ce que ça ne serait pas mieux avec une table de Hashage ? *)
 module Env : Env_s = 
 struct 
   type var_declaration_loc = {var : var_declaration; global : bool} (* Status is True iff the declaration is global *)
@@ -52,10 +51,8 @@ struct
 
   let push v =
     let name_identification elmt = match v.var, elmt.var with
-      (* Error if a global variable is already declared *)
       | CDECL(l, name1, _), CDECL(_, name2, _) when name1 = name2 -> 
         if elmt.global then raise (Declaration_Error (l, "Variable at line was already declared global")) 
-      (* Error if a function is already declared*)
       | CFUN (l, name1, _, _, _), CFUN(_, name2, _,_, _) when name1 = name2 -> 
         raise (Declaration_Error (l,"Function was already declared"))
       |_ -> ()
@@ -69,7 +66,6 @@ struct
     | CDECL (_, _, typ) -> typ
     | CFUN (_, _, _, typ, _) -> typ
 
-  (* TO RECTIFY *)
   let get_elmt s loc = 
     let rec get_elmt_aux stack = 
       let v_loc = Stack.pop stack in
@@ -131,7 +127,7 @@ let check_set_val s taste l =
 
 let check_call tast_list s l =
   let rec compare_types tast_l type_l = 
-    match tast_l type_l with 
+    match tast_l, type_l with 
     |[], [] -> ()
     |[], _ |_, [] -> 
       raise (Type_Error (l,"The function wasn't called with the right number of arguments"))
@@ -205,7 +201,7 @@ let check_bin_op bin_op tast1 tast2 l =
       if (t_opt1 <> Some (TINT) || t_opt2 <> Some (TINT)) then raise(Type_Error (l, "Impossible to take mod of a non integer expression"))
     | S_ADD -> 
       begin
-        match t_op1, t_opt2 with
+        match t_opt1, t_opt2 with
         | Some (TINT), Some (TINT) | Some (TPTR _), Some (TINT)-> ()
         | Some (TPTR _), Some (TPTR _) -> raise (Type_Error (l, "Impossible to add pointers with one another"))
         | Some (TINT), Some (TPTR _) -> raise (Type_Error (l, "Addition between poitner and integer is in the wrong order : change with ptr + int"))
@@ -214,7 +210,8 @@ let check_bin_op bin_op tast1 tast2 l =
     | S_SUB ->
       begin
         match t_opt1, t_opt2 with
-        | Some (TINT), Some (TINT) | Some (TPTR _), Some (TINT) | Some (TPTR t1), Some (TPTR t2) when t1=t2 -> ()
+        | Some (TINT), Some (TINT) | Some (TPTR _), Some (TINT)  -> ()
+        | Some (TPTR t1), Some (TPTR t2) when t1=t2 -> ()
         | Some (TPTR _), Some (TPTR _) -> raise (Type_Error (l, "Impossible to substract pointers with different types"))
         | Some (TINT), Some (TPTR _) -> raise (Type_Error (l, "Substraction between poitner and integer is in the wrong order : change with ptr + int"))
         | None, _ | _, None -> raise (Type_Error (l, "Impossible make substraction with None type"))
@@ -233,7 +230,7 @@ let check_cmp cmp_op tast1 tast2 l =
     end
 
 let check_eif tast1 tast2 tast3 l = 
-  let (t_opt1, _) = tas1 in
+  let (t_opt1, _) = tast1 in
   let (t_opt2, _) = tast2 in
   let (t_opt3, _) = tast3 in 
   if (t_opt2 = t_opt3 ) then  
@@ -262,37 +259,37 @@ and check_expr exp l = match exp with (*Should return typ_expr*)
   | SET_VAR (s, le) -> 
     let taste = check_loc_expr le in
     check_set_var s taste l;
-    SET_VAR (s, tast)
+    SET_VAR_T (s, tast)
   | SET_VAL (s, le) -> 
     let tast = check_loc_expr in
     check_set_val s tast l;
-    SET_VAL (s, tast)
+    SET_VAL_T (s, tast)
   | CALL (s, le_list) -> 
     let tast_list = List.map check_loc_expr le_list in
     check_call s tast_list l;
-    CALL (s, tast_list)
+    CALL_T (s, tast_list)
   | OP1 (m_op, le) -> 
     let taste = check_loc_expr le in
     check_mon_op m_op taste l;
-    OP1 (m_op, tast)
+    OP1_T (m_op, tast)
   | OP2 (b_op, le1, le2) ->
     let tast1 = check_loc_expr le1 in
     let tast2 = check_loc_expr le2 in 
     check_bin_op b_op tast1 tast2 l;
-    OP2 (b_op, tast1, tast2)
+    OP2_T (b_op, tast1, tast2)
   | CMP (cmp_op, le1, le2) ->
     let tast1 = check_loc_expr le1 in
     let tast2 = check_loc_expr le2 in
     check_cmp cmp_op tast1 tast2 l;
-    CMP (cmp_op, ast1, ast2)
+    CMP_T (cmp_op, ast1, ast2)
   | EIF (le1, le2, le3) -> 
     let tast1 = check_loc_expr le1 in
     let tast2 = check_loc_expr le2 in
     let tast3 = check_loc_expr le3 in
     check_eif tast1 tast2 tast3 l;
-    EIF (tast1, tast2, tast3)
+    EIF_T (tast1, tast2, tast3)
   | ESEQ le_list ->
-    ESEQ (List.map check_loc_expr le)
+    ESEQ_T (List.map check_loc_expr le)
 
 (* CHECKING FUNCTIONS FOR CODES *)
 
@@ -310,7 +307,7 @@ let check_if taste tastc1 tastc2 l =
     
 
 let check_while taste tastc l  =  
-  let (t_opt, _ ) = taste 
+  let (t_opt, _ ) = taste in
   match t_opt with
   | Some TINT -> ()
   | _ -> raise (Type_Error (l,"Condition of 'while' is not typed int"))
@@ -328,44 +325,44 @@ let check_return le_opt =
 let rec check_var_declaration v = match v with
  | CDECL (pos, name, typ) -> 
     push (var_declaration_loc_create v false); 
-    CDECL (name, typ)
+    CDECL_T (name, typ)
  | CFUN (pos, name, args, typ, l_code) -> 
     push (var_declaration_loc_create v false);
-    CFUN (name, List.map check_var_declaration args, check_loc_code l_code )
+    CFUN_T (name, List.map check_var_declaration args, check_loc_code l_code )
 
 and check_loc_code l_code = 
   let (_,c) = l_code in
   check_code c
 
-and check_code code = match code with  (* Should return typ_code *)
+and check_code code = match code with  (* Should return typ_code =  *)
     | CBLOCK (decs, loc_codes) -> 
-      CBLOCK (List.map check_var_declaration decs, List.map check_loc_code loc_codes)
+      CBLOCK_T (List.map check_var_declaration decs, List.map check_loc_code loc_codes)
     | CEXPR e -> 
-      CEXPR (check_loc_expr e)
+      CEXPR_T (check_loc_expr e)
     | CIF (le, lc1, lc2) -> 
       let taste = check_loc_expr le in 
       let tastc1 = check_loc_code lc1 in
       let tastc2 = check_loc_code lc2 in
       let (l,_) = le in
       check_if taste tastc1 tastc2 l;
-      CIF (tast1, tast2, tast3)
+      CIF_T (tast1, tast2, tast3)
     | CWHILE (le, lc) ->
       let taste = check_loc_expr le in
       let tastc = check_loc_code lc in
       let (l,_) = le in 
       check_while taste tastc l;
-      CWHILE (tast1, tast2)
+      CWHILE_T (tast1, tast2)
     | CRETURN le_opt -> 
       tast = check_return le_opt in 
-      CRETURN (tast)
+      CRETURN_T (tast)
 
 
 let check_var_declaration_init v = match v with
 | CDECL (pos, name, typ) -> 
    push (var_declaration_loc_create v true);
-   CDECL (name, typ)
+   CDECL_t (name, typ)
 | CFUN (pos, name, args, typ, l_code) -> 
    push (var_declaration_loc_create v false);
-   CFUN (name, List.map check_var_declaration args, typ, check_loc_code l_code)
+   CFUN_t (name, List.map check_var_declaration args, typ, check_loc_code l_code)
 
 let check_file var_dec_l = List.map check_var_declaration_init var_dec_l
