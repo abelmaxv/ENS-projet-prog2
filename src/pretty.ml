@@ -1,6 +1,6 @@
+open Tast
 open Cast
 open Printf
-open Tast
 
 let is_pretty = ref true
 

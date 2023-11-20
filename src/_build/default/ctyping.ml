@@ -57,12 +57,13 @@ struct
     | CDECL (_, _, typ) -> typ
     | CFUN (_, _, _, typ, _) -> typ
 
+  (* TO RECTIFY *)
   let get_elmt s = 
     let rec get_elmt_aux stack = 
       let v_loc = Stack.pop stack in
       match v_loc.var with
-      | CDECL (loc, name, t) when name = s -> CDECL (loc, name, t)
-      | CFUN (loc, name, args, t, code) when name = s -> CFUN (loc, name, args, t, code)
+      | CDECL (loc, name, t) when name = s -> push v_loc ; CDECL (loc, name, t)
+      | CFUN (loc, name, args, t, code) when name = s -> push v_loc; CFUN (loc, name, args, t, code)
       | _ when not (Stack.is_empty env) -> let e = get_elmt_aux stack in Stack.push v_loc stack; e
       | _ -> failwith "Name absent in env"
     in 
@@ -75,6 +76,16 @@ struct
     | CDECL _ -> failwith "Trying to get arguments a variable declaration"
     | CFUN (_, _, l, _, _) -> List.map get_type_decl l
 end
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -207,10 +218,12 @@ let check_return le_opt =
 
 let rec check_var_declaration v = match v with
  | CDECL (pos, name, typ) -> 
-    push (var_declaration_loc_create v false); typ
+    push (var_declaration_loc_create v false); 
+    typ
  | CFUN (pos, name, args, typ, l_code) -> 
     let _ = List.map check_var_declaration args in
     let _ = check_loc_code l_code in
+    push (var_declaration_loc_create v false);
     typ
 
 

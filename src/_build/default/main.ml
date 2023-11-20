@@ -8,6 +8,7 @@ open Clexer
 open Cparser
 open Usage
 open Ctyping
+open Dune__exe__Pretty
 
 let () =
   let c = open_in file in
@@ -16,13 +17,13 @@ let () =
     let f = Cparser.file Clexer.ctoken lb in
     close_in c;
 
-(*    
+   
     if Usage.debug then begin
       let ast_dot_file = open_out (Filename.chop_suffix file ".c" ^ "_ast.dot") in
       Printf.fprintf ast_dot_file "%s" (Pretty.get_dot_ast f (not !no_pretty));
       close_out ast_dot_file
     end;
-*)
+
 
 
     if !Usage.parse_only then exit 0;

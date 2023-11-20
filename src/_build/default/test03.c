@@ -1,10 +1,15 @@
 
 int global;
 
+int foo (int a, int b)
+{
+  return a+b;
+}
+
 int main() {
   int* v;
-  global = 1+v;
-  *v = 0;
+  int w;
+  w = foo(2,3);
   return 0;
 }
 
