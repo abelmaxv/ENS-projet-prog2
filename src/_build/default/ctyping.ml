@@ -260,6 +260,7 @@ let check_var_declaration_init v = match v with
 | CFUN (pos, name, args, typ, l_code) -> 
    let _ = List.map check_var_declaration args in
    let _ = check_loc_code l_code in
+   push (var_declaration_loc_create v false);
    typ
 
 let check_file var_dec_l = List.map check_var_declaration_init var_dec_l
