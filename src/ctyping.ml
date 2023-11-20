@@ -98,7 +98,6 @@ end
 
 
 
-
 (*______________ FUNCTIONS FOR TYPE CHECKING ______________*)
 open Env
 open Tast
@@ -215,7 +214,6 @@ let check_bin_op bin_op tast1 tast2 l =
         | Some (TPTR _), Some (TPTR _) -> raise (Type_Error (l, "Impossible to substract pointers with different types"))
         | Some (TINT), Some (TPTR _) -> raise (Type_Error (l, "Substraction between poitner and integer is in the wrong order : change with ptr + int"))
         | None, _ | _, None -> raise (Type_Error (l, "Impossible make substraction with None type"))
-        |_ -> ()
       end 
 
 let check_cmp cmp_op tast1 tast2 l = 
@@ -252,44 +250,58 @@ let rec check_loc_expr le =
 (* Rajouter la verification de valeur gauche *)
 (* Rajouter la verification de presence d'un return *)
 (* Rajouter le traitement d'un pointeur null ??? *)
-and check_expr exp l = match exp with (*Should return typ_expr*)
-  | VAR s -> (Some (get_type s l), VAR s) 
-  | CST n -> (Some TINT, CST n)
-  | STRING s -> (Some (TPTR TINT), STRING s)
-  | SET_VAR (s, le) -> 
+and check_expr exp l = match exp with 
+  | Cast.VAR s -> (Some (get_type s l), Tast.VAR s) 
+  | Cast.CST n -> (Some TINT, Tast.CST n)
+  | Cast.STRING s -> (Some (TPTR TINT), Tast.STRING s)
+  | Cast.SET_VAR (s, le) -> 
     let taste = check_loc_expr le in
     check_set_var s taste l;
-    SET_VAR_T (s, tast)
-  | SET_VAL (s, le) -> 
-    let tast = check_loc_expr in
-    check_set_val s tast l;
-    SET_VAL_T (s, tast)
-  | CALL (s, le_list) -> 
-    let tast_list = List.map check_loc_expr le_list in
-    check_call s tast_list l;
-    CALL_T (s, tast_list)
-  | OP1 (m_op, le) -> 
+    let (t_opt, _) = taste in
+    t_opt, Tast.SET_VAR (s, taste)
+  | Cast.SET_VAL (s, le) -> 
     let taste = check_loc_expr le in
+    let (t_opt, _) = taste in 
+    check_set_val s taste l;
+    t_opt, Tast.SET_VAL (s, taste)
+  | Cast.CALL (s, le_list) -> 
+    let tast_list = List.map check_loc_expr le_list in
+    check_call tast_list s l;
+    (Some (get_type s l)), Tast.CALL (s, tast_list)
+  | Cast.OP1 (m_op, le) -> 
+    let taste = check_loc_expr le in
+    let (t_opt, _) = taste in
     check_mon_op m_op taste l;
-    OP1_T (m_op, tast)
-  | OP2 (b_op, le1, le2) ->
-    let tast1 = check_loc_expr le1 in
-    let tast2 = check_loc_expr le2 in 
-    check_bin_op b_op tast1 tast2 l;
-    OP2_T (b_op, tast1, tast2)
-  | CMP (cmp_op, le1, le2) ->
-    let tast1 = check_loc_expr le1 in
-    let tast2 = check_loc_expr le2 in
-    check_cmp cmp_op tast1 tast2 l;
-    CMP_T (cmp_op, ast1, ast2)
-  | EIF (le1, le2, le3) -> 
-    let tast1 = check_loc_expr le1 in
-    let tast2 = check_loc_expr le2 in
-    let tast3 = check_loc_expr le3 in
-    check_eif tast1 tast2 tast3 l;
-    EIF_T (tast1, tast2, tast3)
-  | ESEQ le_list ->
-    ESEQ_T (List.map check_loc_expr le)
+    t_opt, Tast.OP1 (m_op, taste)
+  | Cast.OP2 (b_op, le1, le2) ->
+    let taste1 = check_loc_expr le1 in
+    let taste2 = check_loc_expr le2 in 
+    let (t_opt, _) = taste2 in 
+    check_bin_op b_op taste1 taste2 l;
+    t_opt, Tast.OP2 (b_op, taste1, taste2)
+  | Cast.CMP (cmp_op, le1, le2) ->
+    let taste1 = check_loc_expr le1 in
+    let taste2 = check_loc_expr le2 in
+    check_cmp cmp_op taste1 taste2 l;
+    Some (TINT), Tast.CMP (cmp_op, taste1, taste2)
+  | Cast.EIF (le1, le2, le3) -> 
+    let taste1 = check_loc_expr le1 in
+    let taste2 = check_loc_expr le2 in
+    let taste3 = check_loc_expr le3 in
+    let (t_opt, _) = taste2 in
+    check_eif taste1 taste2 taste3 l;
+    t_opt, Tast.EIF (taste1, taste2, taste3)
+  | Cast.ESEQ le_list ->
+    let taste_list = List.map check_loc_expr le_list in
+    let t_opt = begin 
+      match taste_list with
+      | [] -> None
+      | _ -> 
+        let t_expr = (List.hd (List.rev taste_list)) in 
+        let (typ_opt,_) = t_expr in 
+        typ_opt
+      end in 
+    t_opt, Tast.ESEQ (taste_list)
 
 (* CHECKING FUNCTIONS FOR CODES *)
 
@@ -323,46 +335,59 @@ let check_return le_opt =
 
 (* GENERATE TYP_CODE FOR TAST*)
 let rec check_var_declaration v = match v with
- | CDECL (pos, name, typ) -> 
+ | Cast.CDECL (pos, name, typ) -> 
     push (var_declaration_loc_create v false); 
-    CDECL_T (name, typ)
+    Tast.CDECL (name, typ)
  | CFUN (pos, name, args, typ, l_code) -> 
     push (var_declaration_loc_create v false);
-    CFUN_T (name, List.map check_var_declaration args, check_loc_code l_code )
+    Tast.CFUN (name, List.map check_var_declaration args, typ, check_loc_code l_code )
 
 and check_loc_code l_code = 
   let (_,c) = l_code in
   check_code c
 
-and check_code code = match code with  (* Should return typ_code =  *)
-    | CBLOCK (decs, loc_codes) -> 
-      CBLOCK_T (List.map check_var_declaration decs, List.map check_loc_code loc_codes)
-    | CEXPR e -> 
-      CEXPR_T (check_loc_expr e)
-    | CIF (le, lc1, lc2) -> 
+and check_code cod = match cod with  
+    | Cast.CBLOCK (decs, loc_codes) -> 
+      let dec_list = List.map check_var_declaration decs in
+      let code_list = List.map check_loc_code loc_codes in 
+      let (t_opt, _) = List.hd code_list in (* TO HANDLE PROPERLY *)
+      t_opt, Tast.CBLOCK (dec_list, code_list) 
+    | Cast.CEXPR le -> 
+      let taste = check_loc_expr le in 
+      let (t_opt, _) = taste in
+      t_opt, Tast.CEXPR (taste)
+    | Cast.CIF (le, lc1, lc2) -> 
       let taste = check_loc_expr le in 
       let tastc1 = check_loc_code lc1 in
       let tastc2 = check_loc_code lc2 in
       let (l,_) = le in
+      let (t_opt,_) = tastc1 in  
       check_if taste tastc1 tastc2 l;
-      CIF_T (tast1, tast2, tast3)
-    | CWHILE (le, lc) ->
+      t_opt, Tast.CIF (taste, tastc1, tastc2)
+    | Cast.CWHILE (le, lc) ->
       let taste = check_loc_expr le in
       let tastc = check_loc_code lc in
       let (l,_) = le in 
+      let (t_opt, _) = tastc in
       check_while taste tastc l;
-      CWHILE_T (tast1, tast2)
-    | CRETURN le_opt -> 
-      tast = check_return le_opt in 
-      CRETURN_T (tast)
+      t_opt, Tast.CWHILE (taste, tastc)
+    | Cast.CRETURN le_opt -> 
+      let taste_opt = check_return le_opt in 
+      let t_opt = begin
+         match taste_opt with 
+      | None -> None 
+      | Some (taste) -> let (typ_opt, _) = taste in typ_opt 
+      end
+      in
+      t_opt, Tast.CRETURN (taste_opt)
 
 
 let check_var_declaration_init v = match v with
-| CDECL (pos, name, typ) -> 
+| Cast.CDECL (pos, name, typ) -> 
    push (var_declaration_loc_create v true);
-   CDECL_t (name, typ)
-| CFUN (pos, name, args, typ, l_code) -> 
+   Tast.CDECL (name, typ)
+| Cast.CFUN (pos, name, args, typ, l_code) -> 
    push (var_declaration_loc_create v false);
-   CFUN_t (name, List.map check_var_declaration args, typ, check_loc_code l_code)
+   Tast.CFUN (name, List.map check_var_declaration args, typ, check_loc_code l_code)
 
 let check_file var_dec_l = List.map check_var_declaration_init var_dec_l

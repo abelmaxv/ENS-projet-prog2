@@ -8,7 +8,7 @@ open Clexer
 open Cparser
 open Usage
 open Ctyping
-open Dune__exe__Pretty
+open Pretty
 
 let () =
   let c = open_in file in
@@ -57,7 +57,7 @@ let () =
       report_loc (lexeme_start_p lb, lexeme_end_p lb);
       eprintf "Syntax error\n@.";
       exit 1
-    | Ctyping.Env.Already_Declared_Error (l,msg) -> 
+    | Ctyping.Env.Declaration_Error (l,msg) -> 
       report_loc l;
       eprintf "Declaration error : %s\n@." msg;
       exit 1
