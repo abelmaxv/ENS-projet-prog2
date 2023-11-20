@@ -260,7 +260,6 @@ let rec check_loc_expr le =
   check_expr exp l 
 (* Rajouter la verification de valeur gauche *)
 (* Rajouter la verification de presence d'un return *)
-(* Rajouter le traitement d'un pointeur null ??? *)
 and check_expr exp l = match exp with 
   | Cast.VAR s -> (Some (get_type s l), Tast.VAR s) 
   | Cast.CST n -> (Some TINT, Tast.CST n)
