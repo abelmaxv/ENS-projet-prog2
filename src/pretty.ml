@@ -188,3 +188,11 @@ and get_ast_pdecl pdecl parent_id =
 let get_dot_ast pdecls flag_is_pretty =
   is_pretty := flag_is_pretty;
   draw_root_ast (fold_children get_ast_pdecl pdecls)
+
+(*DISPLAING OF TAST*)
+
+(*
+let get_dot_tast pdecls flag_is_pretty = 
+  is_pretty := flag_is_pretty;
+  draw_root_tast (fold_children get_tast_pdecl pdecls)
+  *)

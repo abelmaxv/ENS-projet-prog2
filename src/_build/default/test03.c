@@ -2,9 +2,16 @@
 int global;
 
 int foo (int a, int b)
-{
-  return a+b;
+{ 
+  {
+    int *c;
+  }
+  {
+    int d;
+    return d;
+  }
 }
+
 
 int main() {
   int* v;

@@ -19,6 +19,7 @@
    
 
 open Cast
+open List
 
 
 (*______________ DEFINITION OF AN ENVIRONMENT (Stack) ______________ *)
@@ -31,7 +32,8 @@ sig
   val var_declaration_loc_create : var_declaration -> bool -> var_declaration_loc
   val env : env_t 
   val push : var_declaration_loc -> unit
-  val pop : unit  -> var_declaration
+  val pop : location  -> unit
+  val pop_mult : int -> location -> unit
   val get_elmt : string -> location -> var_declaration
   val get_type : string -> location -> ctyp
   val get_args_types : string -> location -> ctyp list
@@ -60,7 +62,16 @@ struct
     Stack.iter name_identification env;
     Stack.push v env
 
-  let pop () = (Stack.pop env).var
+  let pop l = 
+    try
+      let _ = Stack.pop env in ()
+    with 
+    | Stack.Empty -> raise (Declaration_Error (l, "Issue when managing environement"))
+
+  let pop_mult n l = 
+    for i = 0 to (n-1) do 
+      pop l 
+    done
 
   let get_type_decl d = match d with
     | CDECL (_, _, typ) -> typ
@@ -293,14 +304,12 @@ and check_expr exp l = match exp with
     t_opt, Tast.EIF (taste1, taste2, taste3)
   | Cast.ESEQ le_list ->
     let taste_list = List.map check_loc_expr le_list in
-    let t_opt = begin 
-      match taste_list with
-      | [] -> None
-      | _ -> 
-        let t_expr = (List.hd (List.rev taste_list)) in 
-        let (typ_opt,_) = t_expr in 
-        typ_opt
-      end in 
+    let t_opt = 
+      begin
+        try let (typ_opt,_ ) = List.hd taste_list in typ_opt
+        with _ -> None 
+      end
+    in 
     t_opt, Tast.ESEQ (taste_list)
 
 (* CHECKING FUNCTIONS FOR CODES *)
@@ -338,9 +347,7 @@ let rec check_var_declaration v = match v with
  | Cast.CDECL (pos, name, typ) -> 
     push (var_declaration_loc_create v false); 
     Tast.CDECL (name, typ)
- | CFUN (pos, name, args, typ, l_code) -> 
-    push (var_declaration_loc_create v false);
-    Tast.CFUN (name, List.map check_var_declaration args, typ, check_loc_code l_code )
+ | CFUN (pos, name, args, typ, l_code) -> raise (Env.Declaration_Error (pos, "Trying to declare a local function"))
 
 and check_loc_code l_code = 
   let (_,c) = l_code in
@@ -350,7 +357,24 @@ and check_code cod = match cod with
     | Cast.CBLOCK (decs, loc_codes) -> 
       let dec_list = List.map check_var_declaration decs in
       let code_list = List.map check_loc_code loc_codes in 
-      let (t_opt, _) = List.hd code_list in (* TO HANDLE PROPERLY *)
+      let t_opt = 
+        begin
+          try let (typ_opt,_ ) = List.hd code_list in typ_opt (* TO HANDLE PROPERLY : type of return bloc *)
+          with _ -> None 
+        end
+      in 
+      begin
+        try
+          let l = 
+            begin 
+              match List.hd decs with
+              | Cast.CDECL (pos,_,_) -> pos
+              | Cast.CFUN (pos,_,_,_,_) -> pos
+            end
+          in 
+          pop_mult (List.length dec_list) l   
+        with |_-> ()
+      end;
       t_opt, Tast.CBLOCK (dec_list, code_list) 
     | Cast.CEXPR le -> 
       let taste = check_loc_expr le in 
@@ -387,7 +411,10 @@ let check_var_declaration_init v = match v with
    push (var_declaration_loc_create v true);
    Tast.CDECL (name, typ)
 | Cast.CFUN (pos, name, args, typ, l_code) -> 
+   let taste_list = List.map check_var_declaration args in
+   let tastc = check_loc_code l_code in
+   pop_mult (List.length args) pos ;
    push (var_declaration_loc_create v false);
-   Tast.CFUN (name, List.map check_var_declaration args, typ, check_loc_code l_code)
+   Tast.CFUN (name,taste_list, typ, tastc)
 
 let check_file var_dec_l = List.map check_var_declaration_init var_dec_l
