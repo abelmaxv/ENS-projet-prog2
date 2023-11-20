@@ -17,9 +17,8 @@ type typ = Tint | Tptr of typ
 
 type typ_opt = ctyp option
   
-type typ_expr = typ_opt * expr
-and expr =
-
+type typ_expr = typ_opt * expr_bis
+and expr_bis =
   | VAR of string (** une variable --- toujours de type int. *)
   | CST of int (** une constante entiere. *)
   | STRING of string (** une constante chaine. *)
@@ -45,9 +44,9 @@ type typ_var_declaration =
       (** declaration de variable de type ctyp. *)
   | CFUN of string * var_declaration list * ctyp * typ_code
       (** fonction avec ses arguments, le type du resultat et son code. *)
-and typ_code = typ_opt * code
-and code =
-    CBLOCK of var_declaration list * typ_code list (** { declarations; code; } *)
+and typ_code = typ_opt * code_bis
+and code_bis =
+    CBLOCK of typ_var_declaration list * typ_code list (** { declarations; code; } *)
   | CEXPR of typ_expr (** une expression e; vue comme instruction. *)
   | CIF of typ_expr * typ_code * typ_code (** if (e) c1; else c2; *)
   | CWHILE of typ_expr * typ_code (** while (e) c1; *)

@@ -7,9 +7,19 @@
 *__________________________________________________________________
 *)
 
-(* Ce programme effectue une verification de type (sans produire un arbre syntaxique type) *)
+(* Ce programme effectue une verification de type *)
+
+(* STRUCTURE DU PROGRAMME : 
+   I- DEFINITION D'UNE STRUCTURE DE DONNEE POUR L'ENVIRONNEMENT
+   II- PORGRAMME DE VERIFICATION DE TYPE
+   II.1 - FONCTIONS AUXILIERES DE VERIFICATION POUR LES EXPRESSIONS
+   II.2 - TRAITEMENT DES EXPRESSIONS ET GENERATION TAST 
+   II.3 - FONCTIONS AUXILIERES DE VERIFICATION POUR LES BLOCS DE CODE
+   II.4 - TRAITEMENT DES BLOCS DE CODE ET GENERATION TAST*)
+   
 
 open Cast
+
 
 (*______________ DEFINITION OF AN ENVIRONMENT (Stack) ______________ *)
 
@@ -17,22 +27,24 @@ module type Env_s =
 sig
   type var_declaration_loc
   type env_t
-  exception Already_Declared_Error of location * string
+  exception Declaration_Error of location * string
   val var_declaration_loc_create : var_declaration -> bool -> var_declaration_loc
   val env : env_t 
   val push : var_declaration_loc -> unit
   val pop : unit  -> var_declaration
-  val get_elmt : string -> var_declaration
-  val get_type : string -> ctyp
-  val get_args_types : string -> ctyp list
+  val get_elmt : string -> location -> var_declaration
+  val get_type : string -> location -> ctyp
+  val get_args_types : string -> location -> ctyp list
 end
+
+
 
 (* Est ce que ça ne serait pas mieux avec une table de Hashage ? *)
 module Env : Env_s = 
 struct 
   type var_declaration_loc = {var : var_declaration; global : bool} (* Status is True iff the declaration is global *)
   type env_t = var_declaration_loc Stack.t 
-  exception Already_Declared_Error of location * string
+  exception Declaration_Error of location * string
 
   let var_declaration_loc_create v b = {var = v; global = b}
   
@@ -42,10 +54,10 @@ struct
     let name_identification elmt = match v.var, elmt.var with
       (* Error if a global variable is already declared *)
       | CDECL(l, name1, _), CDECL(_, name2, _) when name1 = name2 -> 
-        if elmt.global then raise (Already_Declared_Error (l, "Variable at line was already declared global")) 
+        if elmt.global then raise (Declaration_Error (l, "Variable at line was already declared global")) 
       (* Error if a function is already declared*)
       | CFUN (l, name1, _, _, _), CFUN(_, name2, _,_, _) when name1 = name2 -> 
-        raise (Already_Declared_Error (l,"Function was already declared"))
+        raise (Declaration_Error (l,"Function was already declared"))
       |_ -> ()
     in 
     Stack.iter name_identification env;
@@ -58,22 +70,22 @@ struct
     | CFUN (_, _, _, typ, _) -> typ
 
   (* TO RECTIFY *)
-  let get_elmt s = 
+  let get_elmt s loc = 
     let rec get_elmt_aux stack = 
       let v_loc = Stack.pop stack in
       match v_loc.var with
       | CDECL (loc, name, t) when name = s -> push v_loc ; CDECL (loc, name, t)
       | CFUN (loc, name, args, t, code) when name = s -> push v_loc; CFUN (loc, name, args, t, code)
       | _ when not (Stack.is_empty env) -> let e = get_elmt_aux stack in Stack.push v_loc stack; e
-      | _ -> failwith "Name absent in env"
+      | _ -> raise (Declaration_Error (loc, "Name was not declared"))
     in 
     get_elmt_aux env
 
-  let get_type s = get_type_decl (get_elmt s)
+  let get_type s loc = get_type_decl (get_elmt s loc)
 
-  let get_args_types s = 
-    match get_elmt s with 
-    | CDECL _ -> failwith "Trying to get arguments a variable declaration"
+  let get_args_types s loc = 
+    match (get_elmt s loc)  with 
+    | CDECL _ -> raise (Declaration_Error (loc, "Trying to get arguments a variable declaration"))
     | CFUN (_, _, l, _, _) -> List.map get_type_decl l
 end
 
@@ -93,174 +105,267 @@ end
 
 (*______________ FUNCTIONS FOR TYPE CHECKING ______________*)
 open Env
+open Tast
 exception Type_Error of location * string
 
-let check_mon_op mon_op typ l = 
-  match mon_op with
-    | M_MINUS | M_NOT | M_POST_INC | M_POST_DEC | M_PRE_INC | M_PRE_DEC  -> 
-      begin 
-        match typ with 
-        | TINT -> typ
-        | _ -> raise (Type_Error (l, "Types are not corresponding in MON_OP"))
-      end
-    | M_DEREF | M_ADDR  -> 
+(*CHECKING FUNCTIONS FOR EXPRESSIONS*)
+
+
+let check_set_var s taste l = 
+  let (t_opt, _) = taste in
+  let typ = get_type s l in
+  match typ, t_opt with
+  | t1, Some t2 when t1 <> t2 -> raise (Type_Error (l, "Expression on the right of affectation don't have the right type"))
+  | _ -> () 
+
+
+let check_set_val s taste l =
+  let (t_opt, _) = taste in
+  let typ = get_type s l in
+  match typ, t_opt with
+  | TINT, _ -> raise (Type_Error (l, "Impossible to do such an affectation to an integer"))
+  | TPTR t1, Some t2 when t1 <> t2 -> raise (Type_Error (l, "Expression on the right of affectation don't have the right type"))
+  | _ -> () 
+
+
+
+let check_call tast_list s l =
+  let rec compare_types tast_l type_l = 
+    match tast_l type_l with 
+    |[], [] -> ()
+    |[], _ |_, [] -> 
+      raise (Type_Error (l,"The function wasn't called with the right number of arguments"))
+    | t_expr::q1, typ::q2 -> 
+      let (t_opt,_) = t_expr in
       begin
-        match typ with
-        | TPTR _ -> typ
-        | _ -> raise (Type_Error (l,"Types are not corresponding in MON_OP")) 
+        match t_opt with 
+        |Some (t) when t = typ -> compare_types q1 q2
+        | _ -> raise (Type_Error (l, "The function was called with wrong types of arguments"))
+      end;
+  in
+  let type_list = get_args_types s l in
+    compare_types tast_list type_list
+
+  
+
+
+let check_mon_op mon_op taste l = 
+  let (t_opt, _) = taste in
+  match mon_op with
+    | M_MINUS  -> 
+      begin 
+        match t_opt with 
+        | Some(TINT) -> ()
+        | Some(TPTR _ ) -> raise (Type_Error (l, "Impossible to take the oposite of a pointer"))
+        | None -> raise (Type_Error (l, "Impossible to take the oposite of None type"))
+      end
+    | M_NOT -> 
+      begin 
+        match t_opt with 
+        | Some(TINT) -> ()
+        | Some(TPTR _ ) -> raise (Type_Error (l, "Impossible to take the negation of a pointer"))
+        | None -> raise (Type_Error (l, "Impossible to take the negation of None type"))
+      end
+    | M_POST_INC | M_PRE_INC ->
+      begin 
+        match t_opt with 
+        | Some(TINT) | Some (TPTR _) -> ()
+        | None -> raise (Type_Error (l, "Impossible to increment None type"))
+      end 
+    | M_POST_DEC | M_PRE_DEC -> 
+      begin 
+        match t_opt with 
+        | Some(TINT) | Some (TPTR _)-> ()
+        | None  -> raise (Type_Error (l, "Impossible to decrement None type"))
+      end
+    | M_DEREF ->
+      begin
+        match t_opt with
+        | Some (TPTR _) -> ()
+        | Some (TINT) -> raise (Type_Error (l,"Impossible to dereferentiate an integer"))
+        | None -> raise (Type_Error (l, "Impossible to dereferentiate a None type")) 
+      end
+    | M_ADDR  ->  
+      begin
+        match t_opt with
+          | Some (TINT) | Some (TPTR _) -> ()
+          | None -> raise (Type_Error (l,"Impossible to get the adress of a None type"))
       end
 
 
-let check_bin_op bin_op typ1 typ2 l = 
+let check_bin_op bin_op tast1 tast2 l =  
+  let (t_opt1, _) = tast1 in
+  let (t_opt2, _) = tast2 in
   match bin_op with
-    | S_MUL | S_DIV | S_MOD -> 
-      if (typ1 = TINT && typ2 = TINT ) then
-        TINT
-      else 
-        raise (Type_Error (l, "Types are not corresponding in BIN_OP ")) 
+    | S_MUL  -> 
+      if (t_opt1 <> Some (TINT) || t_opt2 <> Some (TINT)) then raise(Type_Error (l, "Impossible to multiply a non integer expression"))
+    | S_DIV ->
+      if (t_opt1 <> Some (TINT) || t_opt2 <> Some (TINT)) then raise(Type_Error (l, "Impossible to divide (by) a non integer expression"))
+    | S_MOD ->
+      if (t_opt1 <> Some (TINT) || t_opt2 <> Some (TINT)) then raise(Type_Error (l, "Impossible to take mod of a non integer expression"))
     | S_ADD -> 
       begin
-        match typ1, typ2 with
-        | TINT, TINT -> TINT
-        | TPTR t, TINT -> TPTR t
-        | _ -> raise (Type_Error (l,"Types are not corresponding in BIN_OP ")) 
+        match t_op1, t_opt2 with
+        | Some (TINT), Some (TINT) | Some (TPTR _), Some (TINT)-> ()
+        | Some (TPTR _), Some (TPTR _) -> raise (Type_Error (l, "Impossible to add pointers with one another"))
+        | Some (TINT), Some (TPTR _) -> raise (Type_Error (l, "Addition between poitner and integer is in the wrong order : change with ptr + int"))
+        | None, _ | _, None -> raise (Type_Error (l, "Impossible to make addition with None type"))
       end 
     | S_SUB ->
       begin
-        match typ1, typ2 with
-        | TINT, TINT -> TINT
-        | TPTR t, TINT -> TPTR t
-        | TPTR t1, TPTR t2 when t1 = t2 -> TPTR t1
-        | _ -> raise (Type_Error (l,"Types are not corresponding in BIN_OP ")) 
+        match t_opt1, t_opt2 with
+        | Some (TINT), Some (TINT) | Some (TPTR _), Some (TINT) | Some (TPTR t1), Some (TPTR t2) when t1=t2 -> ()
+        | Some (TPTR _), Some (TPTR _) -> raise (Type_Error (l, "Impossible to substract pointers with different types"))
+        | Some (TINT), Some (TPTR _) -> raise (Type_Error (l, "Substraction between poitner and integer is in the wrong order : change with ptr + int"))
+        | None, _ | _, None -> raise (Type_Error (l, "Impossible make substraction with None type"))
+        |_ -> ()
       end 
 
-let check_cmp cmp_op typ1 typ2 l = 
-  match cmp_op with
-  | C_LT   | C_LE ->
-    if (typ1 = TINT && typ2 = TINT) then TINT
-    else raise (Type_Error (l,"Types are not corresponding in CMP ")) 
-  | C_EQ -> 
-    if (typ1 = typ2) then typ1
-    else raise (Type_Error (l,"Types are not corresponding in CMP ")) 
+let check_cmp cmp_op tast1 tast2 l = 
+  let (t_opt1, _) = tast1 in 
+  let (t_opt2, _) = tast2 in
+  if (t_opt1 <> t_opt2) then 
+    begin
+      match cmp_op with 
+      | C_LT -> raise (Type_Error (l, "Types are not the same on both sides of '<'"))
+      | C_LE -> raise (Type_Error (l, "Types are not the same on both sides of '<='"))
+      | C_EQ -> raise (Type_Error (l, "Types are not the same on both sides of '=='"))
+    end
 
-let check_if typ1 typ2 typ3 l = 
-  match typ1, typ2, typ3 with
-  | TINT, t1, t2 when t1 = t2 -> t1
-  | _ -> raise (Type_Error (l, "Types are not correspondong in EIF")) 
+let check_eif tast1 tast2 tast3 l = 
+  let (t_opt1, _) = tas1 in
+  let (t_opt2, _) = tast2 in
+  let (t_opt3, _) = tast3 in 
+  if (t_opt2 = t_opt3 ) then  
+    begin
+    match t_opt1 with
+      | Some TINT -> ()
+      | _ -> raise (Type_Error (l, "Condition of 'if' is not typed int"))
+    end 
+  else raise (Type_Error (l, "Blocs of after 'if' and 'else' don't have the same type "))
 
 
-let check_while typ1 typ2 l  = 
-  match typ1 with
-  | TINT -> typ2 
-  | _ -> raise (Type_Error (l,"Type is not correspondong in WHILE"))
 
 
+
+(* GENERATE TYP_EXPR FOR TAST *)
 let rec check_loc_expr le =
   let (l, exp) = le in
   check_expr exp l 
 (* Rajouter la verification de valeur gauche *)
 (* Rajouter la verification de presence d'un return *)
 (* Rajouter le traitement d'un pointeur null ??? *)
-and check_expr exp l = match exp with
-  | VAR s -> get_type s
-  | CST n -> TINT
-  | STRING s -> TPTR TINT
+and check_expr exp l = match exp with (*Should return typ_expr*)
+  | VAR s -> (Some (get_type s l), VAR s) 
+  | CST n -> (Some TINT, CST n)
+  | STRING s -> (Some (TPTR TINT), STRING s)
   | SET_VAR (s, le) -> 
-    let typ1 = check_loc_expr le in
-    let typ2 = get_type s in
-    if typ1 = typ2 then 
-      typ1
-    else
-      raise (Type_Error (l, "Types are not corresponding in SET_VAR"))
+    let taste = check_loc_expr le in
+    check_set_var s taste l;
+    SET_VAR (s, tast)
   | SET_VAL (s, le) -> 
-    let typ1 = check_loc_expr le in
-    begin
-    match get_type s with 
-    |TPTR t when t = typ1 -> typ1
-    |_ -> raise(Type_Error (l, "Types are not corresponding in SET_VAL")) 
-    end 
+    let tast = check_loc_expr in
+    check_set_val s tast l;
+    SET_VAL (s, tast)
   | CALL (s, le_list) -> 
-    let le_typs = List.map check_loc_expr le_list in
-    let args_typs = get_args_types s in
-    if le_typs = args_typs then
-      get_type s
-    else
-      raise (Type_Error (l,"Types are not correspondong in CALL")) 
+    let tast_list = List.map check_loc_expr le_list in
+    check_call s tast_list l;
+    CALL (s, tast_list)
   | OP1 (m_op, le) -> 
-    let typ = check_loc_expr le in
-    check_mon_op m_op typ l
+    let taste = check_loc_expr le in
+    check_mon_op m_op taste l;
+    OP1 (m_op, tast)
   | OP2 (b_op, le1, le2) ->
-    let typ1 = check_loc_expr le1 in
-    let typ2 = check_loc_expr le2 in 
-    check_bin_op b_op typ1 typ2 l
+    let tast1 = check_loc_expr le1 in
+    let tast2 = check_loc_expr le2 in 
+    check_bin_op b_op tast1 tast2 l;
+    OP2 (b_op, tast1, tast2)
   | CMP (cmp_op, le1, le2) ->
-    let typ1 = check_loc_expr le1 in
-    let typ2 = check_loc_expr le2 in
-    check_cmp cmp_op typ1 typ2 l
+    let tast1 = check_loc_expr le1 in
+    let tast2 = check_loc_expr le2 in
+    check_cmp cmp_op tast1 tast2 l;
+    CMP (cmp_op, ast1, ast2)
   | EIF (le1, le2, le3) -> 
-    let typ1 = check_loc_expr le1 in
-    let typ2 = check_loc_expr le2 in
-    let typ3 = check_loc_expr le3 in
-    check_if typ1 typ2 typ3 l
+    let tast1 = check_loc_expr le1 in
+    let tast2 = check_loc_expr le2 in
+    let tast3 = check_loc_expr le3 in
+    check_eif tast1 tast2 tast3 l;
+    EIF (tast1, tast2, tast3)
   | ESEQ le_list ->
-    let l = List.rev (List.map check_loc_expr le_list) in
-    begin 
-      match l with
-      | [] -> TINT
-      | h::t -> h 
-    end
+    ESEQ (List.map check_loc_expr le)
+
+(* CHECKING FUNCTIONS FOR CODES *)
+
+let check_if taste tastc1 tastc2 l =  
+  let (t_opte, _) = taste in
+  let (t_optc1, _) = tastc1 in
+  let (t_optc2, _) = tastc2 in 
+  if (t_optc1 = t_optc2 ) then  
+    begin
+    match t_opte with
+      | Some TINT -> ()
+      | _ -> raise (Type_Error (l, "Condition of 'if' is not typed int"))
+    end 
+  else raise (Type_Error (l, "Blocs of after 'if' and 'else' don't have the same type "))
+    
+
+let check_while taste tastc l  =  
+  let (t_opt, _ ) = taste 
+  match t_opt with
+  | Some TINT -> ()
+  | _ -> raise (Type_Error (l,"Condition of 'while' is not typed int"))
 
 let check_return le_opt = 
   match le_opt with
-  | None -> TINT (* A TRAITER *)
-  | Some le -> check_loc_expr le
+  | None -> None 
+  | Some le -> 
+    let tast = check_loc_expr le in
+    Some tast
 
 
+
+(* GENERATE TYP_CODE FOR TAST*)
 let rec check_var_declaration v = match v with
  | CDECL (pos, name, typ) -> 
     push (var_declaration_loc_create v false); 
-    typ
+    CDECL (name, typ)
  | CFUN (pos, name, args, typ, l_code) -> 
-    let _ = List.map check_var_declaration args in
-    let _ = check_loc_code l_code in
     push (var_declaration_loc_create v false);
-    typ
-
+    CFUN (name, List.map check_var_declaration args, check_loc_code l_code )
 
 and check_loc_code l_code = 
   let (_,c) = l_code in
   check_code c
 
-
-and check_code code = match code with 
+and check_code code = match code with  (* Should return typ_code *)
     | CBLOCK (decs, loc_codes) -> 
-      let _ = List.map check_var_declaration decs in 
-      let l = List.map check_loc_code loc_codes in
-      List.hd (List.rev l)
+      CBLOCK (List.map check_var_declaration decs, List.map check_loc_code loc_codes)
     | CEXPR e -> 
-      check_loc_expr e
+      CEXPR (check_loc_expr e)
     | CIF (le, lc1, lc2) -> 
-      let typ1 = check_loc_expr le in 
-      let typ2 = check_loc_code lc1 in
-      let typ3 = check_loc_code lc2 in
+      let taste = check_loc_expr le in 
+      let tastc1 = check_loc_code lc1 in
+      let tastc2 = check_loc_code lc2 in
       let (l,_) = le in
-      check_if typ1 typ2 typ3 l
+      check_if taste tastc1 tastc2 l;
+      CIF (tast1, tast2, tast3)
     | CWHILE (le, lc) ->
-      let typ1 = check_loc_expr le in
-      let typ2 = check_loc_code lc in
+      let taste = check_loc_expr le in
+      let tastc = check_loc_code lc in
       let (l,_) = le in 
-      check_while typ1 typ2 l
+      check_while taste tastc l;
+      CWHILE (tast1, tast2)
     | CRETURN le_opt -> 
-      check_return le_opt
+      tast = check_return le_opt in 
+      CRETURN (tast)
 
 
 let check_var_declaration_init v = match v with
 | CDECL (pos, name, typ) -> 
-   push (var_declaration_loc_create v true); typ
+   push (var_declaration_loc_create v true);
+   CDECL (name, typ)
 | CFUN (pos, name, args, typ, l_code) -> 
-   let _ = List.map check_var_declaration args in
-   let _ = check_loc_code l_code in
    push (var_declaration_loc_create v false);
-   typ
+   CFUN (name, List.map check_var_declaration args, typ, check_loc_code l_code)
 
 let check_file var_dec_l = List.map check_var_declaration_init var_dec_l

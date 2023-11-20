@@ -59,7 +59,7 @@ let () =
       exit 1
     | Ctyping.Env.Already_Declared_Error (l,msg) -> 
       report_loc l;
-      eprintf "Aldready declared error : %s\n@." msg;
+      eprintf "Declaration error : %s\n@." msg;
       exit 1
     | Ctyping.Type_Error (l, msg) -> 
       report_loc l; 
