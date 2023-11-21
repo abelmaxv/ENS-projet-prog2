@@ -37,6 +37,7 @@ sig
   val get_elmt : string -> location -> var_declaration
   val get_type : string -> location -> ctyp
   val get_args_types : string -> location -> ctyp list
+  val is_function : string -> location -> bool
 end
 
 
@@ -94,6 +95,12 @@ struct
     match (get_elmt s loc)  with 
     | CDECL _ -> raise (Declaration_Error (loc, "Trying to get arguments a variable declaration"))
     | CFUN (_, _, l, _, _) -> List.map get_type_decl l
+
+  let is_function name l = 
+    let v = get_elmt name l in
+    match v with 
+    | CDECL _ -> false
+    | CFUN _ -> true 
 end
 
 
@@ -120,18 +127,29 @@ exception Type_Error of location * string
 let check_set_var s taste l = 
   let (t_opt, _) = taste in
   let typ = get_type s l in
-  match typ, t_opt with
-  | t1, Some t2 when t1 <> t2 -> raise (Type_Error (l, "Expression on the right of affectation don't have the right type"))
-  | _ -> () 
+  if is_function s l then 
+    raise (Type_Error (l, "Impossible to do an assignment on a function "))
+  else
+    begin
+      match typ, t_opt with
+      | t1, Some t2 when t1 <> t2 -> raise (Type_Error (l, "Expression on the right of affectation don't have the right type"))
+      | _ -> () 
+    end
+
 
 
 let check_set_val s taste l =
   let (t_opt, _) = taste in
   let typ = get_type s l in
-  match typ, t_opt with
-  | TINT, _ -> raise (Type_Error (l, "Impossible to do such an affectation to an integer"))
-  | TPTR t1, Some t2 when t1 <> t2 -> raise (Type_Error (l, "Expression on the right of affectation don't have the right type"))
-  | _ -> () 
+  if is_function s l then 
+    raise (Type_Error (l, "Impossible to do an assignment on a function "))
+  else
+    begin
+      match typ, t_opt with
+      | TINT, _ -> raise (Type_Error (l, "Impossible to do such an affectation to an integer"))
+      | TPTR t1, Some t2 when t1 <> t2 -> raise (Type_Error (l, "Expression on the right of affectation don't have the right type"))
+      | _ -> () 
+    end
 
 
 
@@ -258,8 +276,7 @@ let check_eif tast1 tast2 tast3 l =
 let rec check_loc_expr le =
   let (l, exp) = le in
   check_expr exp l 
-(* Rajouter la verification de valeur gauche *)
-(* Rajouter la verification de presence d'un return *)
+
 and check_expr exp l = match exp with 
   | Cast.VAR s -> (Some (get_type s l), Tast.VAR s) 
   | Cast.CST n -> (Some TINT, Tast.CST n)
@@ -315,16 +332,11 @@ and check_expr exp l = match exp with
 
 let check_if taste tastc1 tastc2 l =  
   let (t_opte, _) = taste in
-  let (t_optc1, _) = tastc1 in
-  let (t_optc2, _) = tastc2 in 
-  if (t_optc1 = t_optc2 ) then  
-    begin
-    match t_opte with
-      | Some TINT -> ()
-      | _ -> raise (Type_Error (l, "Condition of 'if' is not typed int"))
-    end 
-  else raise (Type_Error (l, "Blocs of after 'if' and 'else' don't have the same type "))
-    
+  match t_opte with
+    | Some TINT -> ()
+    | _ -> raise (Type_Error (l, "Condition of 'if' is not typed int"))
+
+  
 
 let check_while taste tastc l  =  
   let (t_opt, _ ) = taste in
@@ -340,51 +352,63 @@ let check_return le_opt =
     Some tast
 
 
+let check_codelist_return code_list l = 
+  let rec check_return_aux a_list typ_opt = match a_list with
+    | [] -> typ_opt
+    | (None, _)::q -> check_return_aux q typ_opt
+    | (Some t, _)::q when typ_opt = None -> check_return_aux q (Some t)
+    | (typ_opt2, _)::q when typ_opt <> typ_opt2 -> raise (Type_Error (l, "The function has two returns with types differents"))
+    | _::q -> check_return_aux q typ_opt;
+  in
+    check_return_aux code_list None
+
+let check_return_if tastc1 tastc2 loc = 
+  let (t_opt1, _) = tastc1 in
+  let (t_opt2, _) = tastc2 in 
+  match t_opt1, t_opt2 with
+  | None, _ |_, None -> None
+  | Some t1, Some t2 when t1<>t2 ->
+     raise (Type_Error (loc, "Returns in 'if' and return in 'else' bloc don't have the same type"))
+  | Some t1, _ -> Some t1
 
 (* GENERATE TYP_CODE FOR TAST*)
 let rec check_var_declaration v = match v with
  | Cast.CDECL (pos, name, typ) -> 
     push (var_declaration_loc_create v false); 
     Tast.CDECL (name, typ)
- | CFUN (pos, name, args, typ, l_code) -> raise (Env.Declaration_Error (pos, "Trying to declare a local function"))
+ | CFUN (pos, name, args, typ, l_code) -> raise (Env.Declaration_Error (pos, "Impossible to declare a local function"))
 
 and check_loc_code l_code = 
   let (_,c) = l_code in
   check_code c
-
+    
 and check_code cod = match cod with  
     | Cast.CBLOCK (decs, loc_codes) -> 
       let dec_list = List.map check_var_declaration decs in
-      let code_list = List.map check_loc_code loc_codes in 
-      let t_opt = 
-        begin
-          try let (typ_opt,_ ) = List.hd code_list in typ_opt (* TO HANDLE PROPERLY : type of return bloc *)
-          with _ -> None 
-        end
-      in 
+      let code_list = List.map check_loc_code loc_codes in       
       begin
-        try
-          let l = 
-            begin 
-              match List.hd decs with
+        try 
+        let l = 
+            match List.hd decs with
               | Cast.CDECL (pos,_,_) -> pos
               | Cast.CFUN (pos,_,_,_,_) -> pos
-            end
           in 
-          pop_mult (List.length dec_list) l   
-        with |_-> ()
-      end;
-      t_opt, Tast.CBLOCK (dec_list, code_list) 
+          let t_opt = check_codelist_return code_list l in 
+          pop_mult (List.length dec_list) l ; 
+          t_opt, Tast.CBLOCK (dec_list, code_list)
+        with 
+        | Type_Error (l,s) -> raise(Type_Error (l,s))
+        | Failure (hd) -> None, Tast.CBLOCK(dec_list, code_list)  
+      end 
     | Cast.CEXPR le -> 
       let taste = check_loc_expr le in 
-      let (t_opt, _) = taste in
-      t_opt, Tast.CEXPR (taste)
+      None, Tast.CEXPR (taste)
     | Cast.CIF (le, lc1, lc2) -> 
       let taste = check_loc_expr le in 
       let tastc1 = check_loc_code lc1 in
       let tastc2 = check_loc_code lc2 in
       let (l,_) = le in
-      let (t_opt,_) = tastc1 in  
+      let t_opt = check_return_if tastc1 tastc2 l in 
       check_if taste tastc1 tastc2 l;
       t_opt, Tast.CIF (taste, tastc1, tastc2)
     | Cast.CWHILE (le, lc) ->
@@ -396,10 +420,11 @@ and check_code cod = match cod with
       t_opt, Tast.CWHILE (taste, tastc)
     | Cast.CRETURN le_opt -> 
       let taste_opt = check_return le_opt in 
-      let t_opt = begin
+      let t_opt = 
+      begin
          match taste_opt with 
-      | None -> None 
-      | Some (taste) -> let (typ_opt, _) = taste in typ_opt 
+        | None -> Some (TINT)  (* return; <=> return 0; *)
+        | Some (taste) -> let (typ_opt, _) = taste in typ_opt 
       end
       in
       t_opt, Tast.CRETURN (taste_opt)
@@ -412,8 +437,14 @@ let check_var_declaration_init v = match v with
 | Cast.CFUN (pos, name, args, typ, l_code) -> 
    let taste_list = List.map check_var_declaration args in
    let tastc = check_loc_code l_code in
+   let (t_opt, _) = tastc in 
    pop_mult (List.length args) pos ;
    push (var_declaration_loc_create v false);
-   Tast.CFUN (name,taste_list, typ, tastc)
+   begin
+    match t_opt with
+    | None -> raise (Type_Error (pos, "The function don't have a return in every branch"))
+    | Some t when t <> typ -> raise (Type_Error (pos, "Return type does not match with function type"))
+    | _ -> Tast.CFUN (name,taste_list, typ, tastc)
+   end
 
 let check_file var_dec_l = List.map check_var_declaration_init var_dec_l
