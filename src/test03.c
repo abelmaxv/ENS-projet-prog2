@@ -1,17 +1,11 @@
+/* The following program fails because we use a local variable of a bloc in another bloc*/
 
-int global;
-
-int* foo(){
-  int*v;
+int foo(){
+  int v;
   return v;
 }
 
 int main() {
-  int v;
-  if(v){
-    return 0;
-  }
-  else
-  {}
+  return v; 
 }
 

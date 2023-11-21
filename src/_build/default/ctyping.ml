@@ -371,6 +371,25 @@ let check_return_if tastc1 tastc2 loc =
      raise (Type_Error (loc, "Returns in 'if' and return in 'else' bloc don't have the same type"))
   | Some t1, _ -> Some t1
 
+
+let check_names args pos = 
+  let rec get_name_list variables = 
+    match variables with 
+    | [] -> []
+    | t::q -> 
+      begin 
+        match t with
+        | Cast.CDECL (_, name, _ ) -> name :: get_name_list q
+        | Cast.CFUN _ -> raise (Env.Declaration_Error (pos, "Function declaration in arguments"))
+      end 
+  in 
+  let rec with_double = function
+    | [] -> false
+    | x :: xs -> List.mem x xs || with_double xs
+  in 
+  if (with_double (get_name_list args)) then raise(Env.Declaration_Error (pos, "A function was declared with two arguments with the same name"))
+  
+
 (* GENERATE TYP_CODE FOR TAST*)
 let last_function_location = ref( Lexing.dummy_pos, Lexing.dummy_pos) (*Arbitrary position, modified ny check_var_declaration_init and used in the CBLOCK case of check_code *)
 
@@ -428,6 +447,7 @@ let check_var_declaration_init v = match v with
    Tast.CDECL (name, typ)
 | Cast.CFUN (pos, name, args, typ, l_code) -> 
    last_function_location := pos ;
+   check_names args pos;
    let taste_list = List.map check_var_declaration args in
    let tastc = check_loc_code l_code in
    let (t_opt, _) = tastc in 

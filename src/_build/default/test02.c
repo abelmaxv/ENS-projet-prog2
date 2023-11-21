@@ -1,8 +1,8 @@
+/* The following program fails because addition between pointers in not allowed */
 
-int main() {
+int *main(int a) {
   int* v;
-  int u, z;
-  v = 0;
-  return 0;
+  int* w;
+  return v+w;
 }
 

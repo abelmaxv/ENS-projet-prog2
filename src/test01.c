@@ -1,7 +1,9 @@
+/* The following program fails because we redeclare a global variable */
+
+int global;
 
 int main() {
-  int* v;
-  v = 0;
+  int* global;
   return 0;
 }
 
