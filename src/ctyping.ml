@@ -179,40 +179,42 @@ let check_mon_op mon_op taste l =
     | M_MINUS  -> 
       begin 
         match t_opt with 
-        | Some(TINT) -> ()
+        | Some(TINT) -> Some (TINT)
         | Some(TPTR _ ) -> raise (Type_Error (l, "Impossible to take the oposite of a pointer"))
         | None -> raise (Type_Error (l, "Impossible to take the oposite of None type"))
       end
     | M_NOT -> 
       begin 
         match t_opt with 
-        | Some(TINT) -> ()
+        | Some(TINT) -> Some (TINT)
         | Some(TPTR _ ) -> raise (Type_Error (l, "Impossible to take the negation of a pointer"))
         | None -> raise (Type_Error (l, "Impossible to take the negation of None type"))
       end
     | M_POST_INC | M_PRE_INC ->
       begin 
         match t_opt with 
-        | Some(TINT) | Some (TPTR _) -> ()
+        | Some(TINT) -> Some(TINT)
+        | Some (TPTR t) -> Some( TPTR t) 
         | None -> raise (Type_Error (l, "Impossible to increment None type"))
       end 
     | M_POST_DEC | M_PRE_DEC -> 
       begin 
         match t_opt with 
-        | Some(TINT) | Some (TPTR _)-> ()
+        | Some(TINT) -> Some (TINT)
+        | Some (TPTR t)-> Some (TPTR t)
         | None  -> raise (Type_Error (l, "Impossible to decrement None type"))
       end
     | M_DEREF ->
       begin
         match t_opt with
-        | Some (TPTR _) -> ()
+        | Some (TPTR t) -> Some t
         | Some (TINT) -> raise (Type_Error (l,"Impossible to dereferentiate an integer"))
         | None -> raise (Type_Error (l, "Impossible to dereferentiate a None type")) 
       end
     | M_ADDR  ->  
       begin
         match t_opt with
-          | Some (TINT) | Some (TPTR _) -> ()
+          | Some (t) -> Some (TPTR t) 
           | None -> raise (Type_Error (l,"Impossible to get the adress of a None type"))
       end
 
@@ -297,8 +299,7 @@ and check_expr exp l = match exp with
     (Some (get_type s l)), Tast.CALL (s, tast_list)
   | Cast.OP1 (m_op, le) -> 
     let taste = check_loc_expr le in
-    let (t_opt, _) = taste in
-    check_mon_op m_op taste l;
+    let t_opt = check_mon_op m_op taste l in
     t_opt, Tast.OP1 (m_op, taste)
   | Cast.OP2 (b_op, le1, le2) ->
     let taste1 = check_loc_expr le1 in
