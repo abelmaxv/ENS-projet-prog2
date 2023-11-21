@@ -7,7 +7,11 @@ int* foo(){
 }
 
 int main() {
-  int *v;
-  return v;
+  int v;
+  if(v){
+    return 0;
+  }
+  else
+  {}
 }
 

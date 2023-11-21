@@ -372,6 +372,8 @@ let check_return_if tastc1 tastc2 loc =
   | Some t1, _ -> Some t1
 
 (* GENERATE TYP_CODE FOR TAST*)
+let last_function_location = ref( Lexing.dummy_pos, Lexing.dummy_pos) (*Arbitrary position, modified ny check_var_declaration_init and used in the CBLOCK case of check_code *)
+
 let rec check_var_declaration v = match v with
  | Cast.CDECL (pos, name, typ) -> 
     push (var_declaration_loc_create v false); 
@@ -385,21 +387,11 @@ and check_loc_code l_code =
 and check_code cod = match cod with  
     | Cast.CBLOCK (decs, loc_codes) -> 
       let dec_list = List.map check_var_declaration decs in
-      let code_list = List.map check_loc_code loc_codes in       
-      begin
-        try 
-        let l = 
-            match List.hd decs with
-              | Cast.CDECL (pos,_,_) -> pos
-              | Cast.CFUN (pos,_,_,_,_) -> pos
-          in 
-          let t_opt = check_codelist_return code_list l in 
-          pop_mult (List.length dec_list) l ; 
-          t_opt, Tast.CBLOCK (dec_list, code_list)
-        with 
-        | Type_Error (l,s) -> raise(Type_Error (l,s))
-        | Failure (hd) -> None, Tast.CBLOCK(dec_list, code_list)  
-      end 
+      let code_list = List.map check_loc_code loc_codes in
+      let l = !last_function_location in       
+      let t_opt = check_codelist_return code_list l in
+      pop_mult (List.length dec_list) l ; 
+      t_opt, Tast.CBLOCK (dec_list, code_list)
     | Cast.CEXPR le -> 
       let taste = check_loc_expr le in 
       None, Tast.CEXPR (taste)
@@ -435,6 +427,7 @@ let check_var_declaration_init v = match v with
    push (var_declaration_loc_create v true);
    Tast.CDECL (name, typ)
 | Cast.CFUN (pos, name, args, typ, l_code) -> 
+   last_function_location := pos ;
    let taste_list = List.map check_var_declaration args in
    let tastc = check_loc_code l_code in
    let (t_opt, _) = tastc in 
