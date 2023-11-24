@@ -6,6 +6,10 @@ module Cast = Dune__exe__Cast
 module Clexer = Dune__exe__Clexer
 
 
+(** @canonical Dune__exe.Compile *)
+module Compile = Dune__exe__Compile
+
+
 (** @canonical Dune__exe.Cparser *)
 module Cparser = Dune__exe__Cparser
 

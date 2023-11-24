@@ -9,6 +9,7 @@ open Cparser
 open Usage
 open Ctyping
 open Pretty
+open Compile
 
 let () =
   let c = open_in file in
@@ -28,7 +29,7 @@ let () =
 
     if !Usage.parse_only then exit 0;
 
-    let _ = Ctyping.check_file f in ()
+    let tast = Ctyping.check_file f in 
   
 (*
     if Usage.debug then begin
@@ -38,16 +39,16 @@ let () =
     end;
 *)
 
-(*  TO UNCOMMENT
+
     if !Usage.type_only then exit 0;
 
-    let code = Compile.file ~debug f in
+    let code = Compile.compile_file tast in
 
     let c = open_out (Filename.chop_suffix file ".c" ^ ".s") in
-    let fmt = formatter_of_out_channel c in
-    Lc3.print_program fmt code;
+    (*let fmt = formatter_of_out_channel c in*)
+    Printf.fprintf c "%s \n" code;
     close_out c
-*)
+
   with
     | Clexer.Lexing_error s ->
       report_loc (lexeme_start_p lb, lexeme_end_p lb);

@@ -1,4 +1,4 @@
-/* This program should compile : to illustrate what is suppose to work */
+/* This program should compile : to illustrate a 'complex' program that is suppose to work */
 
 int global1;
 int global2;
