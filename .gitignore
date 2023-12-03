@@ -55,4 +55,6 @@ projet-ocaml-sujet.pdf
 
 *.dot
 *.png
+*.s
 
+.DS_Store
