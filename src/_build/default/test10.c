@@ -1,6 +1,6 @@
 int b; 
 
-int main ()
+int main (int n)
 {
     int a;
     return 0;
