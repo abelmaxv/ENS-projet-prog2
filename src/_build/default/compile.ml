@@ -22,7 +22,7 @@ sig
   val add : item -> unit
   val pop : unit -> unit
   val get_pos : string -> int (*Returns the position by name*)
-  val get_loc : string -> bool (* Returns if a variable if local or not*)
+  val is_loc : string -> bool (* Returns if a variable if local or not*)
   val create_item : string -> bool -> int -> item
   val pop_multiple : int -> unit
 end
@@ -59,7 +59,7 @@ struct
       end
 
 
-  let rec get_loc name = 
+  let rec is_loc name = 
     if Stack.is_empty symbol_table then
       failwith "The name was not found in the symbol table"
     else
@@ -72,7 +72,7 @@ struct
           end
         else
           begin
-            let l = get_loc name in
+            let l = is_loc name in
             Stack.push i symbol_table;
             l
           end
@@ -91,13 +91,7 @@ end
 
 
 
-
-
-
-
-(*__________________________ LC-3 GENERATION __________________________*)
-open Tast
-open Symbol_tab
+(*________________________ SOME USEFULL TOOLS _______________________*)
 
 let local_counter = ref 0 (* Counts the number of vraiable declared in a block*)
 let global_counter = ref 0  (* Counts the number of global variable declared *)
@@ -109,25 +103,145 @@ let rec cat_list string_l =
   | [] -> ""
   | s::q -> s^cat_list q
 
+let label_counter = ref 0 
+
+(* Generates a fresh label *)
+let label_generator () = incr label_counter; "label" ^ string_of_int(!label_counter)
+
+
+(*__________________________ LC-3 GENERATION __________________________*)
+open Tast
+open Symbol_tab
+
+(*TO DO*)
+let compile_mon_op mon_op = 
+  match mon_op with
+  | Cast.M_MINUS -> 
+    "NOT R0 R0 \nADD R0 R0 #1 ; R0 <- -RO \n"
+  | Cast.M_NOT -> 
+    "NOT R0 R0 ; R0 <- ~R0\n"
+  | Cast.M_POST_INC -> 
+    ""
+  | Cast.M_POST_DEC -> ""
+  | Cast.M_PRE_INC -> ""
+  | Cast.M_PRE_DEC -> ""
+  | Cast.M_DEREF -> ""
+  | Cast.M_ADDR -> ""
+
+
+(* TO DO *)
+let compile_bin_op bin_op = 
+  match bin_op with
+  | S_MUL -> ""
+  | S_DIV -> ""
+  | S_MOD -> ""
+  | S_ADD -> ""
+  | S_SUB -> ""
+
+
+(*TO DO*)
+let compile_cmp_op cmp_op = 
+  match cmp_op with 
+  | C_LT -> ""
+  | C_LE -> ""
+  | C_EQ -> ""
+
+
+let rec compile_typ_expr typ_expr = 
+  let (_, expr) = typ_expr in
+  compile_expr expr
+
+and compile_expr expr =
+  match expr with
+  | Tast.VAR name -> 
+    if (is_loc name) then
+      "LDR R0 R6 #-" ^ string_of_int(get_pos name) ^ " \n"
+    else
+      "LDR R0 R4 #" ^ string_of_int(get_pos name) ^ " \n"
+  | Tast.CST n -> 
+    "AND R0 R0 #0 ADD R0 R0 #" ^string_of_int(n) ^ " \n"
+  | Tast.STRING s -> 
+    "String not handled yet \n" (*TO DO*)
+  | Tast.SET_VAR (name, typ_expr) -> 
+    let expr_asm = compile_typ_expr typ_expr in
+    expr_asm ^
+    if (is_loc name) then
+      "STR R0 R6 #-" ^ string_of_int(get_pos name) ^ " \n"
+    else 
+      "STR R0 R4 #" ^ string_of_int(get_pos name) ^ " \n"
+  | Tast.SET_VAL (name, typ_expr) -> 
+    let expr_asm = compile_typ_expr typ_expr in
+    expr_asm ^
+    if (is_loc name) then
+      "STR R0 R6 #-" ^ string_of_int(get_pos name) ^ " \n"
+    else 
+      "STR R0 R4 #" ^ string_of_int(get_pos name) ^ " \n"
+  | Tast.CALL (name, typ_expr_l) -> 
+    "Calling functions is yet to implement \n" (*TO DO*)
+  | Tast.OP1 (mon_op, typ_expr) -> 
+    let expr_asm = compile_typ_expr typ_expr in
+    let mon_op_asm = compile_mon_op mon_op in
+    expr_asm ^ mon_op_asm
+  | Tast.OP2 (bin_op, typ_expr1, typ_expr2) -> 
+    let expr_asm1 = compile_typ_expr typ_expr1 in
+    let expr_asm2 = compile_typ_expr typ_expr2 in
+    let bin_op_asm = compile_bin_op bin_op in
+    (*Compile e1 in R0, puts in stack, compile e2 in R0, pop stack in R1, then operation on R0 and R1*)
+    expr_asm1 ^ "ADD R6 R6 #-1 \nLDR R6 R0 #0\n" ^ expr_asm2 ^ "LDR R1 R6 #0 \nADD R6 R6 #1 \n" ^ bin_op_asm
+  | Tast.CMP (cmp_op, typ_expr1, typ_expr2) -> 
+    let expr_asm1 = compile_typ_expr typ_expr1 in
+    let expr_asm2 = compile_typ_expr typ_expr2 in
+    let cmp_asm = compile_cmp_op cmp_op in
+    (*Same as OP2*)
+    expr_asm1 ^ "ADD R6 R6 #-1 \nLDR R6 R0 #0\n" ^ expr_asm2 ^ "LDR R1 R6 #0 \nADD R6 R6 #1 \n" ^ cmp_asm
+  | Tast.EIF (typ_expr1, typ_expr2, typ_expr3) -> 
+    let expr_asm1 = compile_typ_expr typ_expr1 in
+    let expr_asm2 = compile_typ_expr typ_expr2 in
+    let expr_asm3 = compile_typ_expr typ_expr3 in
+    let label_false = label_generator() in
+    expr_asm1 ^ "BRz blockFalse_" ^ label_false ^ " \n" ^ expr_asm2 ^ "blockFalse_" ^ label_false ^ " \n" ^ expr_asm3
+  | Tast.ESEQ typ_expr_l -> 
+    cat_list (List.map compile_typ_expr typ_expr_l)
+
+
+  
+
 let rec compile_var_declaration typ_vd = 
   match typ_vd with
   | Tast.CDECL (name, _) -> (* declaration of a local variable *)
     add (create_item name true (!local_counter)); 
     incr local_counter;
-    "ADD R6 R6 #-1 ;Puts the local variable " ^ name ^ " on top of the stack \n"
+    "ADD R6 R6 #-1 ; Puts the local variable " ^ name ^ " on top of the stack \n"
   | Tast.CFUN (name, typ_vd, typ, typ_code) -> failwith "Declaration of a local function"
-(* TO DO *)
+
 and compile_code typ_code = 
     let (_, code) = typ_code in
     match code with 
     | Tast.CBLOCK (var_dec_l, t_code_l) -> 
       cat_list (List.map compile_var_declaration var_dec_l) ^ cat_list (List.map compile_code t_code_l)
-    | Tast.CEXPR typ_expr -> ""
-    | Tast.CIF (typ_expr, typ_code1, typ_code2) -> ""
-    | Tast.CWHILE (typ_expr, typ_code)->""
-    | Tast.CRETURN (typ_expr_opt) -> ""
+    | Tast.CEXPR typ_expr -> 
+      compile_typ_expr typ_expr
+    | Tast.CIF (typ_expr, typ_code1, typ_code2) -> 
+      let condition_asm = compile_typ_expr typ_expr in
+      let code_asm1 = compile_code typ_code1 in
+      let code_asm2 = compile_code typ_code2 in
+      let label_false = label_generator() in
+      let label_end = label_generator() in
+      "; If block : evaluation of e in R0 \n" ^ condition_asm ^ "ADD RO R0 #0 ; Tests if the IF the contition is true \nBRz blockFalse_" ^ label_false ^ "; Go to block blockFalse if R0 = 0 \n" ^ code_asm1 ^ "BR endIf_" ^ label_end ^ "; Continues after the if instruction \nblockFalse_" ^ label_false ^ " ; Block if the condition is false \n" ^ code_asm2 ^ "endIf_" ^ label_end ^ " ; End of the if instruction \n"
+    | Tast.CWHILE (typ_expr, typ_code)->
+      let condition_asm = compile_typ_expr typ_expr in
+      let code_asm = compile_code typ_code in
+      let label_condition = label_generator() in
+      let label_end = label_generator() in
+      (* TO DO : CAN BE IMPROVED (cf cours) *)
+      "; While block \n" ^ "cond_" ^ label_condition ^ " ; evaluation of the while condition in R0 \n" ^ condition_asm ^ "ADD R0 R0 #0 ; Tests if the condition is true \n" ^ "BRz end_" ^ label_end ^ " ; If not go to the end of the while block \n" ^ "; Code in the body of the while block : \n" ^ code_asm ^ "; End of the body of the while block \nBR cond_" ^ label_condition ^ "\nend_" ^ label_end ^ "\n; End of the while block \n"
+    | Tast.CRETURN (Some typ_expr) -> (* TO DO *)
+      let expr_asm = compile_typ_expr typ_expr in
+      "; Return block : evaluation of e in R0 \n" ^ expr_asm ^ "LDR R0 R5 #0 ; Puts the result in the return memory \n" (*..... TO CONTINUE *)
+    | _ -> ""
 
 
+(* TO DO : traitement des arguments de fonction different des variables locales *)
 let compile_var_declaration_init typ_vd = 
   match typ_vd with
   | Tast.CDECL (name, _) -> (* declaration of a global variable *)
@@ -142,4 +256,4 @@ let compile_var_declaration_init typ_vd =
     pop_multiple (!local_counter);
     name ^ "\nADD R6 R6 #-1 \n; empile adresse retour R7 \nADD R6 R6 #-1 \nSTR R7 R6 #0 \n; empile base cadre R5 \nADD R6 R6 #-1 \nSTR R5 R6 #0 \n; nouvelle base \nADD R6 R6 #-2 \n" ^ var_asm ^ code_asm
 
-let compile_file f = ".ORIG x3000 \nJSR main \n" ^ cat_list (List.map compile_var_declaration_init f) ^ ".END \n"
+let compile_file f = ".ORIG x3000 \nBR main \n" ^ cat_list (List.map compile_var_declaration_init f) ^ ".END \n"
