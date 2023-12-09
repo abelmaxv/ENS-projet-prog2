@@ -1,7 +1,8 @@
-int b; 
+int b;
 
-int main (int n)
+int main ()
 {
     int a;
+    a=0;
     return 0;
 }

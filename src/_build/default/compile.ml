@@ -37,7 +37,7 @@ struct
 
   let add i = Stack.push i symbol_table 
 
-  let pop () = let _ = Stack.pop symbol_table in ()
+  let pop () = let _ = Stack.pop symbol_table in  ()
 
   let rec get_pos name = 
     if Stack.is_empty symbol_table then
@@ -135,29 +135,53 @@ let compile_mon_op mon_op =
     "; (&x) \n" 
 
 
-(* TO DO *)
+
 let compile_bin_op bin_op = 
   match bin_op with
   | S_MUL -> 
     let loop_label = label_generator() in
     let end_label = label_generator() in
-    (* ALgorithm we've seen in class *)
-    "; R2 <- R1*R0 then R0<-R2 :\nAND R2, R2, #0 \nAND R1, R1, R1 \nBRz end_" ^ end_label ^ "\nBRp loop_" ^ loop_label ^ "\nNOT R0, R0 \nADD R0, R0, #1 \nNOT R1, R1 \nADD R1, R1, #1 \n loop_" ^ loop_label ^ "\nADD R2, R2, R0 \nADD R1, R1, #-1 \nBRnp loop_" ^ loop_label ^ "\nend_" ^ end_label ^ "\n ADD R0, R2, #0 \n"
-  | S_DIV -> 
-    "; R0 <- R1/R0"
-  | S_MOD -> ""
+    (* Algorithm we've seen in class *)
+    "; R2 <- R1*R0 then R0 <- R2 :\nAND R2, R2, #0 \nAND R1, R1, R1 \nBRz end_" ^ end_label ^ "\nBRp loop_" ^ loop_label ^ "\nNOT R0, R0 \nADD R0, R0, #1 \nNOT R1, R1 \nADD R1, R1, #1 \n loop_" ^ loop_label ^ "\nADD R2, R2, R0 \nADD R1, R1, #-1 \nBRnp loop_" ^ loop_label ^ "\nend_" ^ end_label ^ "\n ADD R0, R2, #0 \n"
+  | S_DIV ->
+    let error_label = label_generator() in
+    let zero_neg_label = label_generator() in
+    let test_one_label = label_generator() in
+    let loop_label = label_generator() in
+    let end_label = label_generator() in 
+    (* R3 = 0 iif R0 and R1 have the same sign *)
+    "; R2 <- R1/R0 then R0 <- R2 :\nAND R3, R3, 0 ; R3 <- 0 \nADD R2, R3, #-1 ; R2 <- -1 \n; Tests sign of R0 \nADD R0, R0, #0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, RO \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " \nADD R3, R3, #1 \n; Tests sign of R1 \ntest_one_" ^ test_one_label ^ " \nADD R1, R1, #0 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " \nADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " \n ; TO COMPLETE \nend_" ^ end_label ^ "\nADD R0, R2, #0 ; R0 <- R2 \n"
+    (* TO DO : DIVISION BY ZERO TO HANDLE *)
+  | S_MOD -> 
+    let error_label = label_generator() in
+    let zero_neg_label = label_generator() in
+    let test_one_label = label_generator() in
+    let loop_label = label_generator() in
+    let end_label = label_generator() in 
+    "; R0 <- R1 mod R0 doing R2 <- R1/R0 then R0 <- R1-R2 :\nADD R2, R3, #-1 ; R2 <- -1 \n; Tests sign of R0 \nADD R0, R0, #0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, RO \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " \nADD R3, R3, #1 \n; Tests sign of R1 \ntest_one_" ^ test_one_label ^ " \nADD R1, R1, #0 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " \nADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " \n ; TO COMPLETE \nend_" ^ end_label ^ "\nNOT R2, R2 \nADD R2, R2, #1 \nADD R0, R1, R2 ; R0 <- R1-R2  \n"
+      (* TO DO : DIVISION BY ZERO TO HANDLE *)
   | S_ADD ->
     "; R0 <- R0+R1 :\nADD R0, R0, R1 ; R0 <- R0 + R1 \n"
   | S_SUB -> 
     "; R0 <- R1 - R0 :\nNOT R0, R0 \nADD R0, R0, #1 \n ADD R0, R0, R1 \n"
 
 
-(*TO DO*)
+
 let compile_cmp_op cmp_op = 
   match cmp_op with 
-  | C_LT -> ""
-  | C_LE -> ""
-  | C_EQ -> ""
+  | C_LT -> 
+    let neg_label = label_generator() in
+    let end_label = label_generator() in
+    "; R0 <- R1<R0 : \nNOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^end_label ^ " \nneg_" ^ neg_label ^ " \nAND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " \n"
+  | C_LE -> 
+    let neg_label = label_generator() in
+    let end_label = label_generator() in
+    "; R0 <- R1<R0 : \nNOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRzn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^end_label ^ " \nneg_" ^ neg_label ^ " \nAND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " \n"
+  | C_EQ -> 
+    let eq_label = label_generator() in
+    let end_label = label_generator() in
+    "; R0 <- R1<R0 : \nNOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRz neg_" ^ eq_label ^ " \nAND R0, R0, #0 \nBR end_" ^end_label ^ " \nneg_" ^ eq_label ^ " \nAND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " \n"
+
 
 
 let rec compile_typ_expr addr typ_expr = 
@@ -252,7 +276,9 @@ and compile_code typ_code =
     let (_, code) = typ_code in
     match code with 
     | Tast.CBLOCK (var_dec_l, t_code_l) -> 
-      cat_list (List.map compile_var_declaration var_dec_l) ^ cat_list (List.map compile_code t_code_l)
+      let s1 = cat_list (List.map compile_var_declaration var_dec_l) in
+      let s2 = cat_list (List.map compile_code t_code_l) in
+      s1^s2
     | Tast.CEXPR typ_expr -> 
       compile_typ_expr true typ_expr
     | Tast.CIF (typ_expr, typ_code1, typ_code2) -> 
@@ -287,6 +313,7 @@ let compile_var_declaration_init typ_vd =
     let var_asm = cat_list (List.map compile_var_declaration typ_vd) in
     let code_asm = compile_code typ_code in
     pop_multiple (!local_counter);
+    local_counter := 0;
     (* TO DOUBLE CHECK *)
     name ^ "\nADD R6 R6 #-1 \n; empile adresse retour R7 \nADD R6, R6, #-1 \nSTR R7, R6, #0 \n; empile base cadre R5 \nADD R6, R6, #-1 \nSTR R5, R6, #0 \n; nouvelle base \nADD R6, R6, #-2 \n" ^ var_asm ^ code_asm
 

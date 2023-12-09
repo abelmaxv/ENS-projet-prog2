@@ -37,7 +37,7 @@ struct
 
   let add i = Stack.push i symbol_table 
 
-  let pop () = let _ = Stack.pop symbol_table in ()
+  let pop () = let _ = Stack.pop symbol_table in  ()
 
   let rec get_pos name = 
     if Stack.is_empty symbol_table then
@@ -276,7 +276,9 @@ and compile_code typ_code =
     let (_, code) = typ_code in
     match code with 
     | Tast.CBLOCK (var_dec_l, t_code_l) -> 
-      cat_list (List.map compile_var_declaration var_dec_l) ^ cat_list (List.map compile_code t_code_l)
+      let s1 = cat_list (List.map compile_var_declaration var_dec_l) in
+      let s2 = cat_list (List.map compile_code t_code_l) in
+      s1^s2
     | Tast.CEXPR typ_expr -> 
       compile_typ_expr true typ_expr
     | Tast.CIF (typ_expr, typ_code1, typ_code2) -> 
