@@ -166,13 +166,22 @@ let compile_bin_op bin_op =
     "; R0 <- R1 - R0 :\nNOT R0, R0 \nADD R0, R0, #1 \n ADD R0, R0, R1 \n"
 
 
-(*TO DO*)
+
 let compile_cmp_op cmp_op = 
   match cmp_op with 
   | C_LT -> 
-    ""
-  | C_LE -> ""
-  | C_EQ -> ""
+    let neg_label = label_generator() in
+    let end_label = label_generator() in
+    "; R0 <- R1<R0 : \nNOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^end_label ^ " \nneg_" ^ neg_label ^ " \nAND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " \n"
+  | C_LE -> 
+    let neg_label = label_generator() in
+    let end_label = label_generator() in
+    "; R0 <- R1<R0 : \nNOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRzn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^end_label ^ " \nneg_" ^ neg_label ^ " \nAND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " \n"
+  | C_EQ -> 
+    let eq_label = label_generator() in
+    let end_label = label_generator() in
+    "; R0 <- R1<R0 : \nNOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRz neg_" ^ eq_label ^ " \nAND R0, R0, #0 \nBR end_" ^end_label ^ " \nneg_" ^ eq_label ^ " \nAND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " \n"
+
 
 
 let rec compile_typ_expr addr typ_expr = 
