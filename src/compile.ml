@@ -229,14 +229,14 @@ and compile_expr addr expr =
   | Tast.STRING s -> 
     "STRING IS YET TO IMPLEMENT \n" (*TO DO*)
   | Tast.SET_VAR (name, typ_expr) -> 
-    let expr_asm = compile_typ_expr addr typ_expr in
+    let expr_asm = compile_typ_expr false typ_expr in
     expr_asm ^
     if (is_loc name) then
       "STR R0, R5, #-" ^ string_of_int(get_pos name) ^ " ; M[R5 - offset] <- R0 (x = e with x local) \n"
     else 
       "STR R0, R4, #" ^ string_of_int(get_pos name) ^ " ; M[R4 + offset]<- R0 (x = e with x global) \n"
   | Tast.SET_VAL (name, typ_expr) ->
-    let expr_asm = compile_typ_expr addr typ_expr in
+    let expr_asm = compile_typ_expr false typ_expr in
     expr_asm ^
     if (is_loc name) then
       "LDR R1, R5, #-" ^ string_of_int(get_pos name) ^ " R1 <- M[R5 - offset] \nSTR R0, R1, #0 ; M[R1] <- R0 (*x = e with x local) \n"
@@ -255,25 +255,25 @@ and compile_expr addr expr =
     let mon_op_asm = compile_mon_op mon_op in
     expr_asm ^ mon_op_asm
   | Tast.OP2 (bin_op, typ_expr1, typ_expr2) -> 
-    let expr_asm1 = compile_typ_expr addr typ_expr1 in
-    let expr_asm2 = compile_typ_expr  addr typ_expr2 in
+    let expr_asm1 = compile_typ_expr false typ_expr1 in
+    let expr_asm2 = compile_typ_expr  false typ_expr2 in
     let bin_op_asm = compile_bin_op bin_op in
     (*Compiles e1 in R0, puts in stack, compiles e2 in R0, pops stack in R1, then does operation on R0 and R1*)
-    expr_asm1 ^ "ADD R6, R6, #-1 \nLDR R6, R0, #0 ; puts the evaluation of an expression on the stack\n" ^ expr_asm2 ^ "LDR R1, R6, #0 \nADD R6, R6, #1 ; pops stack to do a binary operation\n" ^ bin_op_asm
+    expr_asm1 ^ "STR R0, R6, #0\nADD R6, R6, #-1 ; puts the evaluation of an expression on the stack\n" ^ expr_asm2 ^ "ADD R6, R6, #1\nLDR R1, R6, #0  ; pops stack to do a binary operation\n" ^ bin_op_asm
   | Tast.CMP (cmp_op, typ_expr1, typ_expr2) -> 
-    let expr_asm1 = compile_typ_expr addr typ_expr1 in
-    let expr_asm2 = compile_typ_expr addr typ_expr2 in
+    let expr_asm1 = compile_typ_expr false typ_expr1 in
+    let expr_asm2 = compile_typ_expr false typ_expr2 in
     let cmp_asm = compile_cmp_op cmp_op in
     (*Same as OP2*)
     expr_asm1 ^ "ADD R6, R6, #-1 \nLDR R6, R0, #0 ; puts the evaluation of an expression on the stack\n" ^ expr_asm2 ^ "LDR R1, R6, #0 \nADD R6, R6, #1 ; pops stack to do a comparaison\n" ^ cmp_asm
   | Tast.EIF (typ_expr1, typ_expr2, typ_expr3) -> 
-    let expr_asm1 = compile_typ_expr addr typ_expr1 in
-    let expr_asm2 = compile_typ_expr addr typ_expr2 in
-    let expr_asm3 = compile_typ_expr addr typ_expr3 in
+    let expr_asm1 = compile_typ_expr false typ_expr1 in
+    let expr_asm2 = compile_typ_expr false typ_expr2 in
+    let expr_asm3 = compile_typ_expr false typ_expr3 in
     let label_false = label_generator() in
     expr_asm1 ^ "BRz blockFalse_" ^ label_false ^ " " ^ expr_asm2 ^ "blockFalse_" ^ label_false ^ " " ^ expr_asm3
   | Tast.ESEQ typ_expr_l -> 
-    cat_list (List.map (compile_typ_expr addr) typ_expr_l )
+    cat_list (List.map (compile_typ_expr false) typ_expr_l )
 
 
   

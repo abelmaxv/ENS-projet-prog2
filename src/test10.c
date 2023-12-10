@@ -1,11 +1,16 @@
-int a; 
+int c;
 
 int main ()
 {
     int b;
-    int c;
-    a=1;
-    b=2;
-    c=3;
+    b = 0;
+    if (c)
+    {
+        c = 2;
+    } 
+    else 
+    {
+        c = 3;
+    }
     return 0;
 }
