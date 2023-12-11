@@ -207,22 +207,23 @@ and compile_expr addr expr =
   (* If addr = true : Var name -> address of name
               Else : Var name -> content of name *)
   match expr with
-  | Tast.VAR name -> 
+  | Tast.VAR name ->
+    let cte_label = label_generator() in 
     if addr then 
       (* RO <- addr of name *)
       begin 
         if (is_loc name) then
-          "ADD R0, R5, #-" ^ string_of_int(get_pos name) ^ " ; R0 <- R5 - offset (addr of local) \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R0, R2, R5 ; R0 <- R5 - offset (addr of local) \n"
         else
-          "ADD R0, R4, #" ^ string_of_int(get_pos name) ^ " ; R0 <- R4 + offset (addr of gloabl) \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R0, R4, R2 ; R0 <- R4 + offset (addr of gloabl) \n"
       end 
     else  
       (* R0 <- value of name *)
       begin
         if (is_loc name) then
-          "LDR R0, R5, #-" ^ string_of_int(get_pos name) ^ " ; R0 <- M[R5-offset] (value of local)  \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nLDR R0, R2, #0 ; R0 <- M[R5-offset] (value of local)  \n"
         else
-          "LDR R0, R4, #" ^ string_of_int(get_pos name) ^ " ; R0 <- M[R4+offset] (value of gloabl) \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R4 \nLDR R0, R2, #0 ; R0 <- M[R4+offset] (value of gloabl) \n"
       end
   | Tast.CST n -> 
     let cte_label = label_generator() in
@@ -231,18 +232,20 @@ and compile_expr addr expr =
     "STRING IS YET TO IMPLEMENT \n" (*TO DO*)
   | Tast.SET_VAR (name, typ_expr) -> 
     let expr_asm = compile_typ_expr false typ_expr in
+    let cte_label = label_generator() in
     expr_asm ^
     if (is_loc name) then
-      "STR R0, R5, #-" ^ string_of_int(get_pos name) ^ " ; M[R5 - offset] <- R0 (x = e with x local) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R5 \nSTR R0, R2, #0 ; M[R5 - offset] <- R0 (x = e with x local) \n"
     else 
-      "STR R0, R4, #" ^ string_of_int(get_pos name) ^ " ; M[R4 + offset]<- R0 (x = e with x global) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R4 \nSTR R0, R2, #0 ; M[R4 + offset]<- R0 (x = e with x global \n"
   | Tast.SET_VAL (name, typ_expr) ->
     let expr_asm = compile_typ_expr false typ_expr in
+    let cte_label = label_generator() in
     expr_asm ^
     if (is_loc name) then
-      "LDR R1, R5, #-" ^ string_of_int(get_pos name) ^ " R1 <- M[R5 - offset] \nSTR R0, R1, #0 ; M[R1] <- R0 (*x = e with x local) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R5 \nLDR R2, R2, #0  ; R2 <- M[R5 - offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x local) \n"
     else 
-      "LDR R1, R4, #" ^ string_of_int(get_pos name) ^ " R1 <- M[R4 + offset] \nSTR R0, R1, #0 ; M[R1] <- R0 (*x = e with x global) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R4 \nLDR R2, R2, #0  ; R2 <- M[R4 + offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x global) \n"
   | Tast.CALL (name, typ_expr_l) -> 
     "; CALLING FUNCTIONS IS YET TO IMPLEMENT \n" (*TO DO*)
   | Tast.OP1 (mon_op, typ_expr) -> 
