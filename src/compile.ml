@@ -127,7 +127,7 @@ open Symbol_tab
 let compile_mon_op mon_op = 
   match mon_op with
   | Cast.M_MINUS -> 
-    "NOT R0, R0 \nADD R0, R0, #1 ; R0 <- -RO \n"
+    "NOT R0, R0 \nADD R0, R0, #1 ; R0 <- -R0 \n"
   | Cast.M_NOT -> 
     "NOT R0 R0 ; R0 <- ~R0\n"
   | Cast.M_POST_INC -> 
@@ -162,7 +162,7 @@ let compile_bin_op bin_op =
     let end_label = label_generator() in 
     (* R3 = 0 iif R0 and R1 have the same sign *)
     (*R2 <- R1/R0 then R0 <- R2  *)
-    "AND R3, R3, #0 ; R3 <- 0 \nADD R2, R3, #-1 ; R2 <- -1 \nADD R0, R0, #0 ; Tests the sign of R0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, RO \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " ADD R3, R3, #1 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " ADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " ADD R0, R2, #0 ; R0 <- R2 \n"
+    "AND R3, R3, #0 ; R3 <- 0 \nADD R2, R3, #-1 ; R2 <- -1 \nADD R0, R0, #0 ; Tests the sign of R0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, R0 \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " ADD R3, R3, #1 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " ADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nADD R2, R2, #1 ; R2  <- -R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " ADD R0, R2, #0 ; R0 <- R2 \n"
     (* TO DO : DIVISION BY ZERO TO HANDLE *)
   | S_MOD -> 
     let error_label = label_generator() in
@@ -171,7 +171,7 @@ let compile_bin_op bin_op =
     let loop_label = label_generator() in
     let end_label = label_generator() in 
     (* R0 <- R1 mod R0 doing R2 <- R1/R0 then R0 <- R1-R2*)
-    "AND R3, R3, #0 ; R3 <- 0 \nADD R2, R3, #-1 ; R2 <- -1 \nADD R0, R0, #0 ; Tests the sign of R0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, RO \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " ADD R3, R3, #1 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " ADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " NOT R2, R2 \nADD R2, R2, #1 \nADD R0, R1, R2 ; R0 <- R1-R2 \n"
+    "AND R3, R3, #0 ; R3 <- 0 \nADD R2, R3, #-1 ; R2 <- -1 \nADD R0, R0, #0 ; Tests the sign of R0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, R0 \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " ADD R3, R3, #1 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " ADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " NOT R2, R2 \nADD R2, R2, #1 \nADD R0, R1, R2 ; R0 <- R1-R2 \n"
       (* TO DO : DIVISION BY ZERO TO HANDLE *)
   | S_ADD ->
     (*R0 <- R0+R1*)
