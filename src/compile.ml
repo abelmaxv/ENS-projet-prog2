@@ -131,9 +131,9 @@ let compile_mon_op mon_op =
   | Cast.M_NOT -> 
     "NOT R0 R0 ; R0 <- ~R0\n"
   | Cast.M_POST_INC -> 
-    "LDR R1, R0, #0 ; R1 <- M[R0] \nADD R1, R1, #1 ; R1 <- R1 + 1 \nSTR R1, R0, #0 : M[R0] <- R1 \nADD R0, R1, #-1 ; R0 <- R1-1 (x++) \n"
+    "LDR R1, R0, #0 ; R1 <- M[R0] \nADD R1, R1, #1 ; R1 <- R1 + 1 \nSTR R1, R0, #0 ; M[R0] <- R1 \nADD R0, R1, #-1 ; R0 <- R1-1 (x++) \n"
   | Cast.M_POST_DEC -> 
-    "LDR R1, R0, #0 ; R1 <- M[R0] \nADD R1, R1, #-1 ; R1 <- R1 - 1 \nSTR R1, R0, #0 : M[R0] <- R1 \nADD R0, R1, #1 ; R0 <- R1+1 (x--) \n"
+    "LDR R1, R0, #0 ; R1 <- M[R0] \nADD R1, R1, #-1 ; R1 <- R1 - 1 \nSTR R1, R0, #0 ; M[R0] <- R1 \nADD R0, R1, #1 ; R0 <- R1+1 (x--) \n"
   | Cast.M_PRE_INC -> 
     "LDR R1, R0, #0 ; R1 <- M[R0] \nADD R1, R1, #1 ; R1 <- R1+1 \nSTR R1, R0, #0 ; M[R0]<-R1 \nADD R0, R1, #0 ; R0 <- R1 (++x) \n"
   | Cast.M_PRE_DEC -> 
@@ -178,7 +178,7 @@ let compile_bin_op bin_op =
     "ADD R0, R0, R1 ; R0 <- R0 + R1 \n"
   | S_SUB -> 
     (* R0 <- R1-R0 *)
-    "NOT R0, R0 \nADD R0, R0, #1 \n ADD R0, R0, R1 \n"
+    "NOT R0, R0 \nADD R0, R0, #1 \nADD R0, R0, R1 \n"
 
 
 
@@ -187,15 +187,15 @@ let compile_cmp_op cmp_op =
   | C_LT -> 
     let neg_label = label_generator() in
     let end_label = label_generator() in
-    "NOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^ end_label ^ " \nneg_" ^ neg_label ^ " AND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " "
+    "NOT R0, R0 \nADD R0, R0, #1 \nADD R1, R1, R0 \nBRn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^ end_label ^ " \nneg_" ^ neg_label ^ " AND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " "
   | C_LE -> 
     let neg_label = label_generator() in
     let end_label = label_generator() in
-    "NOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRzn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^ end_label ^ " \nneg_" ^ neg_label ^ " AND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " "
+    "NOT R0, R0 \nADD R0, R0, #1 \nADD R1, R1, R0 \nBRzn neg_" ^ neg_label ^ " \nAND R0, R0, #0 \nBR end_" ^ end_label ^ " \nneg_" ^ neg_label ^ " AND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " "
   | C_EQ -> 
     let eq_label = label_generator() in
     let end_label = label_generator() in
-    "NOT R0, R0 \nADD R0, R0, #0 \nADD R1, R1, R0 \nBRz eq_" ^ eq_label ^ " \nAND R0, R0, #0 \nBR end_" ^ end_label ^ " \neq_" ^ eq_label ^ "  AND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " "
+    "NOT R0, R0 \nADD R0, R0, #1 \nADD R1, R1, R0 \nBRz eq_" ^ eq_label ^ " \nAND R0, R0, #0 \nBR end_" ^ end_label ^ " \neq_" ^ eq_label ^ "  AND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " "
 
 
 
@@ -225,7 +225,8 @@ and compile_expr addr expr =
           "LDR R0, R4, #" ^ string_of_int(get_pos name) ^ " ; R0 <- M[R4+offset] (value of gloabl) \n"
       end
   | Tast.CST n -> 
-    "AND R0, R0, #0 \nADD R0, R0, #" ^ string_of_int(n) ^ " ; R0 <-  " ^ string_of_int n ^ " \n"
+    let cte_label = label_generator() in
+    "LD R0 cte_" ^ cte_label ^ " \nBR cte_ignore_" ^ cte_label ^ "\ncte_" ^ cte_label ^ " .FILL #" ^ string_of_int(n) ^ " ; R0 <-  " ^ string_of_int n ^ " \ncte_ignore_" ^ cte_label ^ " "
   | Tast.STRING s -> 
     "STRING IS YET TO IMPLEMENT \n" (*TO DO*)
   | Tast.SET_VAR (name, typ_expr) -> 
@@ -265,7 +266,7 @@ and compile_expr addr expr =
     let expr_asm2 = compile_typ_expr false typ_expr2 in
     let cmp_asm = compile_cmp_op cmp_op in
     (*Same as OP2*)
-    expr_asm1 ^ "ADD R6, R6, #-1 \nLDR R6, R0, #0 ; puts the evaluation of an expression on the stack\n" ^ expr_asm2 ^ "LDR R1, R6, #0 \nADD R6, R6, #1 ; pops stack to do a comparaison\n" ^ cmp_asm
+    expr_asm1 ^ "STR R0, R6, #0\nADD R6, R6, #-1 ; puts the evaluation of an expression on the stack\n" ^ expr_asm2 ^ "ADD R6, R6, #1\nLDR R1, R6, #0  ; pops stack to do a comparison \n" ^ cmp_asm
   | Tast.EIF (typ_expr1, typ_expr2, typ_expr3) -> 
     let expr_asm1 = compile_typ_expr false typ_expr1 in
     let expr_asm2 = compile_typ_expr false typ_expr2 in
@@ -297,19 +298,19 @@ and compile_code typ_code =
     | Tast.CEXPR typ_expr -> 
       compile_typ_expr true typ_expr
     | Tast.CIF (typ_expr, typ_code1, typ_code2) -> 
-      let condition_asm = compile_typ_expr true typ_expr in
+      let condition_asm = compile_typ_expr false typ_expr in
       let code_asm1 = compile_code typ_code1 in
       let code_asm2 = compile_code typ_code2 in
       let label_false = label_generator() in
       let label_end = label_generator() in
-      condition_asm ^ "ADD RO, R0, #0 ; Tests if the IF the contition is true \nBRz blockFalse_" ^ label_false ^ "; Go to block blockFalse if R0 = 0 \n" ^ code_asm1 ^ "BR endIf_" ^ label_end ^ "; Continues after the if instruction \nblockFalse_" ^ label_false ^ code_asm2 ^ "endIf_" ^ label_end 
+      condition_asm ^ "ADD R0, R0, #0 ; Tests if the IF the contition is true \nBRz blockFalse_" ^ label_false ^ "; Go to block blockFalse if R0 = 0 \n" ^ code_asm1 ^ "BR endIf_" ^ label_end ^ "; Continues after the if instruction \nblockFalse_" ^ label_false ^ " " ^ code_asm2 ^ "endIf_" ^ label_end 
     | Tast.CWHILE (typ_expr, typ_code)->
-      let condition_asm = compile_typ_expr true typ_expr in
+      let condition_asm = compile_typ_expr false typ_expr in
       let code_asm = compile_code typ_code in
       let label_condition = label_generator() in
       let label_end = label_generator() in
       (* TO DO : CAN BE IMPROVED (cf cours) *)
-      "cond_" ^ label_condition ^ " " ^ condition_asm ^ "ADD R0, R0, #0 ; Tests if the condition is true \n" ^ "BRz end_" ^ label_end ^ " ; If not go to the end of the while block \n" ^ code_asm ^ " ; End of the body of the while block \nBR cond_" ^ label_condition ^ "\nend_" ^ label_end 
+      "cond_" ^ label_condition ^ " " ^ condition_asm ^ "ADD R0, R0, #0 ; Tests if the condition is true \n" ^ "BRz end_" ^ label_end ^ " ; If not go to the end of the while block \n" ^ code_asm ^ "BR cond_" ^ label_condition ^ "\nend_" ^ label_end 
     | Tast.CRETURN (Some typ_expr) -> (* TO DO *)
       "; RERTURN IS YET TO IMPLEMENT \n" 
     | _ -> ""

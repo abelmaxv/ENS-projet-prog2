@@ -1,16 +1,14 @@
-int c;
 
 int main ()
 {
-    int b;
-    b = 0;
-    if (c)
+    int c;
+    int d;
+    c = 4;
+    d = 0;
+    while (0<c)
     {
-        c = 2;
+        c--;
+        d++;
     } 
-    else 
-    {
-        c = 3;
-    }
     return 0;
 }

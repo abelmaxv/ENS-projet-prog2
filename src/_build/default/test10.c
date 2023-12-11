@@ -1,10 +1,14 @@
 
 int main ()
 {
-    int b;
     int c;
-    b = 2;
-    c = 3+b;
-
+    int d;
+    c = 4;
+    d = 0;
+    while (0<c)
+    {
+        c--;
+        d++;
+    } 
     return 0;
 }
