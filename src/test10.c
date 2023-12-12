@@ -1,6 +1,11 @@
+int w;
 
 int main ()
 {
-    5%2;
+    int *v;
+    int *z;
+    v = "salut";
+    z = "bonjour";
+    w = 1372;
     return 0;
 }

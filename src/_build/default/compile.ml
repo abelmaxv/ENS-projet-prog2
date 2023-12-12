@@ -96,6 +96,7 @@ end
 let local_counter = ref 0 (* Counts the number of vraiable declared in a block*)
 let global_counter = ref 0  (* Counts the number of global variable declared *)
 
+let string_location = Queue.create()  (* Stores the position of strings in the static memory, just after the code *)
 
 (* Concatenates elements of a list of strings *)
 let rec cat_list string_l = 
@@ -123,6 +124,62 @@ let label_generator () = incr label_counter; "label" ^ string_of_int(!label_coun
 open Tast
 open Symbol_tab
 
+(* First Pass : location of strings in the memory *)
+let rec string_expr typ_expr = 
+  let (_, expr) = typ_expr in
+  match expr with
+  | Tast.VAR _ | Tast.CST _ -> ""
+  | Tast.STRING s ->  
+    (* Creates the string memory location and increases global_counter for other global variable*)
+    Queue.add !global_counter string_location;
+    global_counter := !global_counter + String.length s + 1;
+    ".STRINGZ " ^ s ^ " \n"
+
+  | Tast.SET_VAR (_, typ_expr) | Tast.SET_VAL (_, typ_expr) | Tast.OP1 (_, typ_expr) -> 
+    string_expr typ_expr
+  | Tast.OP2 (_, typ_expr1, typ_expr2) | Tast.CMP (_, typ_expr1, typ_expr2) ->
+    let str_expr1 = string_expr typ_expr1 in
+    let str_expr2 = string_expr typ_expr2 in 
+    str_expr1 ^ str_expr2 
+  | Tast.EIF (typ_expr1, typ_expr2, typ_expr3) -> 
+    let str_expr1 = string_expr typ_expr1 in
+    let str_expr2 = string_expr typ_expr2 in 
+    let str_expr3 = string_expr typ_expr3 in 
+    str_expr1 ^ str_expr2 ^ str_expr3
+  | Tast.ESEQ typ_expr_l | Tast.CALL (_, typ_expr_l) ->
+    cat_list (List.map string_expr typ_expr_l)
+
+and string_var_declaration typ_vd = 
+  match typ_vd with
+  | Tast.CFUN (name, typ_vd, typ, typ_code) -> 
+    string_code typ_code 
+  | _ -> ""
+
+and  string_code  typ_code = 
+  let (_,code) = typ_code in
+  match code with
+  | Tast.CBLOCK (var_dec_l, t_code_l) -> 
+    let str_var = cat_list (List.map string_var_declaration var_dec_l) in
+    let str_code = cat_list (List.map string_code t_code_l) in 
+    str_var ^ str_code
+  | Tast.CEXPR typ_expr ->
+    string_expr typ_expr
+  | Tast.CIF (typ_expr, typ_code1, typ_code2) -> 
+    let str_expr = string_expr typ_expr in
+    let str_code1 = string_code typ_code1 in
+    let str_code2 = string_code typ_code2 in
+    str_expr ^ str_code1 ^ str_code2
+  | Tast.CWHILE (typ_expr, typ_code)->
+    let str_expr = string_expr typ_expr in
+    let str_code = string_code typ_code in
+    str_expr ^ str_code
+  | Tast.CRETURN (Some typ_expr) -> 
+    string_expr typ_expr  
+  | _ -> ""
+
+
+(* Second pass : compilation *)
+
 
 let compile_mon_op mon_op = 
   match mon_op with
@@ -142,7 +199,7 @@ let compile_mon_op mon_op =
     "LDR R0 R0 #0 ; R0 <- M[R0] (*x) \n"
   | Cast.M_ADDR ->
     (*with the compile_typ_expr R0 contains the address of the variable*) 
-    "; (&x) \n" 
+    "" 
 
 
 
@@ -228,24 +285,26 @@ and compile_expr addr expr =
   | Tast.CST n -> 
     let cte_label = label_generator() in
     "LD R0 cte_" ^ cte_label ^ " \nBR cte_ignore_" ^ cte_label ^ "\ncte_" ^ cte_label ^ " .FILL #" ^ string_of_int(n) ^ " ; R0 <-  " ^ string_of_int n ^ " \ncte_ignore_" ^ cte_label ^ " "
-  | Tast.STRING s -> 
-    "STRING IS YET TO IMPLEMENT \n" (*TO DO*)
+  | Tast.STRING s ->
+    let cte_label = label_generator() in 
+    let n = Queue.take string_location in 
+    "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_" ^ cte_label ^ " .FILL #" ^ string_of_int n ^ "\nignore_cte_" ^ cte_label ^ " ADD R0, R2, R4 ; R0 <- adress of a string \n"
   | Tast.SET_VAR (name, typ_expr) -> 
     let expr_asm = compile_typ_expr false typ_expr in
     let cte_label = label_generator() in
     expr_asm ^
     if (is_loc name) then
-      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R5 \nSTR R0, R2, #0 ; M[R5 - offset] <- R0 (x = e with x local) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nSTR R0, R2, #0 ; M[R5 - offset] <- R0 (x = e with x local) \n"
     else 
-      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R4 \nSTR R0, R2, #0 ; M[R4 + offset]<- R0 (x = e with x global \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R4 \nSTR R0, R2, #0 ; M[R4 + offset]<- R0 (x = e with x global \n"
   | Tast.SET_VAL (name, typ_expr) ->
     let expr_asm = compile_typ_expr false typ_expr in
     let cte_label = label_generator() in
     expr_asm ^
     if (is_loc name) then
-      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R5 \nLDR R2, R2, #0  ; R2 <- M[R5 - offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x local) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nLDR R2, R2, #0  ; R2 <- M[R5 - offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x local) \n"
     else 
-      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ "ADD R2, R2, R4 \nLDR R2, R2, #0  ; R2 <- M[R4 + offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x global) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R4 \nLDR R2, R2, #0  ; R2 <- M[R4 + offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x global) \n"
   | Tast.CALL (name, typ_expr_l) -> 
     "; CALLING FUNCTIONS IS YET TO IMPLEMENT \n" (*TO DO*)
   | Tast.OP1 (mon_op, typ_expr) -> 
@@ -337,8 +396,9 @@ let compile_var_declaration_init typ_vd =
     name ^ " " ^ var_asm ^ code_asm
 
 let compile_file f = 
+  let string_mem = cat_list (List.map string_var_declaration f) in 
   let code = cat_list (List.map compile_var_declaration_init f)  in
   let l = count_ligns code in
   let header = ".ORIG x3000 \nLD R6 init_stack \nBR ignore_init_stack \ninit_stack .FILL #65503\nignore_init_stack ADD R5, R6, #0 \nLD R4 init_static \nBR ignore_init_static \ninit_static .FILL #" ^ string_of_int (l + 7 + 12288) ^ "\nignore_init_static BR main \n" in 
   let footer =  ".END \n" in
-  header ^ code ^ footer
+  header ^ code ^ string_mem ^ footer

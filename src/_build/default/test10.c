@@ -1,6 +1,8 @@
 
+
 int main ()
 {
-    5%2;
+    int *v;
+    v = "salut";
     return 0;
 }
