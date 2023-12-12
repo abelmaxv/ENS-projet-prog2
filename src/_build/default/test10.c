@@ -1,10 +1,6 @@
 
 int main ()
 {
-    int v;
-    int *z;
-    v = 2;
-    z = &v;
-    *z;
+    10%4;
     return 0;
 }
