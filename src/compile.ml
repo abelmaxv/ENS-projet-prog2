@@ -223,11 +223,10 @@ let compile_bin_op bin_op =
   | S_MOD -> 
     let error_label = label_generator() in
     let test_one_label = label_generator() in
-    let init_two_label = label_generator() in 
     let loop_label = label_generator() in
     let end_label = label_generator() in 
     (* R0 <- R1 mod R0 doing R2 <- R1/R0 then R0 <- R1-R2*)
-    "AND R3,R3,#0 ; R3 <- 0 \nADD R0, R0, #0 ; Tests the sign of R0 \nBRz error_" ^ error_label ^ "\nBRn test_one_" ^ test_one_label ^ "\nNOT R0, R0 \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp init_two_" ^ init_two_label ^" \nNOT R1, R1 \nADD R1, R1, #1 ; if R1<0 then R1 <- -R1\nADD R3, R3, #1 ; Mark R1 changed sign \ninit_two_" ^ init_two_label ^ " ADD R2, R1, R0 ; R2 <- R1 + R0 \nloop_" ^ loop_label ^ " ADD R2, R1, R0 ; R2 <- R1 + R0\nADD R1, R1, R0 ; R1 <- R1 + R0 \nBRp loop_" ^ loop_label ^ "\nNOT R0, R0 \nADD R0, R0, #1 ; R0 <- -R0 \nADD R0, R2, R0 ; R0 <- R2 + R0 \nADD R3, R3, #-1 ; Tests if R3 = 1 \nBRnp end_" ^ end_label ^" \nNOT R0, R0 \nADD R0, R0, #1 ; R0 <- -R0\nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " "
+    "AND R3,R3,#0 ; R3 <- 0 \nADD R0, R0, #0 ; Tests the sign of R0 \nBRz error_" ^ error_label ^ "\nBRn test_one_" ^ test_one_label ^ "\nNOT R0, R0 \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp loop_" ^ loop_label ^ " \nNOT R1, R1 \nADD R1, R1, #1 ; if R1<0 then R1 <- -R1\nADD R3, R3, #1 ; Mark R1 changed sign \nloop_" ^ loop_label ^ " ADD R1, R1, R0 ; R1 <- R1 + R0 \nBRzp loop_" ^ loop_label ^ "\nNOT R0, R0 \nADD R0, R0, #1 ; R0 <- -R0 \nADD R0, R1, R0 ; R0 <- R1 + R0 \nADD R3, R3, #-1 ; Tests if R3 = 1 \nBRnp end_" ^ end_label ^" \nNOT R0, R0 \nADD R0, R0, #1 ; R0 <- -R0\nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " "
       (* TO DO : DIVISION BY ZERO TO HANDLE *)
   | S_ADD ->
     (*R0 <- R0+R1*)
