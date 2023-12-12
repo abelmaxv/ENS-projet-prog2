@@ -95,7 +95,6 @@ end
 
 let local_counter = ref 0 (* Counts the number of vraiable declared in a block*)
 let global_counter = ref 0  (* Counts the number of global variable declared *)
-
 let string_location = Queue.create()  (* Stores the position of strings in the static memory, just after the code *)
 
 (* Concatenates elements of a list of strings *)
@@ -363,15 +362,17 @@ and compile_code typ_code =
       let condition_asm = compile_typ_expr false typ_expr in
       let code_asm1 = compile_code typ_code1 in
       let code_asm2 = compile_code typ_code2 in
-      let label_false = label_generator() in
-      let label_end = label_generator() in
-      condition_asm ^ "ADD R0, R0, #0 ; Tests if the IF the contition is true \nBRz blockFalse_" ^ label_false ^ "; Go to block blockFalse if R0 = 0 \n" ^ code_asm1 ^ "BR endIf_" ^ label_end ^ "; Continues after the if instruction \nblockFalse_" ^ label_false ^ " " ^ code_asm2 ^ "endIf_" ^ label_end 
+      let label_true = label_generator() in
+      let cte_label = label_generator() in
+      let cte_label2 = label_generator() in
+      let nb_lines1 = count_ligns code_asm1 in
+      let nb_lines2 = count_ligns code_asm2 in
+      condition_asm ^ "ADD R0, R0, #0 ; Tests if the IF condition is true \nBRnp true_" ^ label_true ^ "\nLEA R0, #11 \nLD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_" ^ cte_label ^ " .FILL #" ^ string_of_int nb_lines1 ^ " \nignore_cte_" ^ cte_label ^ " ADD R0, R0, R2\nJMP R0 \n" ^ "true_" ^ label_true ^ " " ^ code_asm1 ^ "\nLEA R0, #5 \nLD R2 cte_" ^ cte_label2 ^ "\nBR ignore_cte_" ^ cte_label2 ^ "\ncte_" ^ cte_label2 ^ " .FILL #" ^ string_of_int nb_lines2 ^ " \nignore_cte_" ^ cte_label2 ^ " ADD R0, R0, R2\nJMP R0 \n" ^ code_asm2
     | Tast.CWHILE (typ_expr, typ_code)->
       let condition_asm = compile_typ_expr false typ_expr in
       let code_asm = compile_code typ_code in
       let label_condition = label_generator() in
       let label_end = label_generator() in
-      (* TO DO : CAN BE IMPROVED (cf cours) *)
       "cond_" ^ label_condition ^ " " ^ condition_asm ^ "ADD R0, R0, #0 ; Tests if the condition is true \n" ^ "BRz end_" ^ label_end ^ " ; If not go to the end of the while block \n" ^ code_asm ^ "BR cond_" ^ label_condition ^ "\nend_" ^ label_end 
     | Tast.CRETURN (Some typ_expr) -> (* TO DO *)
       "; RERTURN IS YET TO IMPLEMENT \n" 
