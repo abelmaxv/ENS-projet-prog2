@@ -1,8 +1,10 @@
 
-
 int main ()
 {
-    int *v;
-    v = "salut";
+    int v;
+    int *z;
+    v = 2;
+    z = &v;
+    *z;
     return 0;
 }

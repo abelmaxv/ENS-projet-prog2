@@ -196,7 +196,7 @@ let compile_mon_op mon_op =
   | Cast.M_PRE_DEC -> 
     "LDR R1, R0, #0 ; R1 <- M[R0] \nADD R1, R1, #-1 ; R1 <- R1+1 \nSTR R1, R0, #0 ; M[R0]<-R1 \nADD R0, R1, #0 ; R0 <- R1 (--x) \n"
   | Cast.M_DEREF -> 
-    "LDR R0 R0 #0 ; R0 <- M[R0] (*x) \n"
+    "LDR R0 R0 #0 \nLDR R0,R0, #0 ; R0 <- M[M[R0]] (*x) \n"
   | Cast.M_ADDR ->
     (*with the compile_typ_expr R0 contains the address of the variable*) 
     "" 

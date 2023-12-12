@@ -1,11 +1,10 @@
-int w;
 
 int main ()
 {
-    int *v;
+    int v;
     int *z;
-    v = "salut";
-    z = "bonjour";
-    w = 1372;
+    v = 2;
+    z = &v;
+    *z;
     return 0;
 }
