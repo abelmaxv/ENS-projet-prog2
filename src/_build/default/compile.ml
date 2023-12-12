@@ -218,7 +218,7 @@ let compile_bin_op bin_op =
     let end_label = label_generator() in 
     (* R3 = 0 iif R0 and R1 have the same sign *)
     (*R2 <- R1/R0 then R0 <- R2  *)
-    "AND R3, R3, #0 ; R3 <- 0 \nADD R2, R3, #-1 ; R2 <- -1 \nADD R0, R0, #0 ; Tests the sign of R0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, R0 \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " ADD R3, R3, #1 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " ADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nADD R2, R2, #1 ; R2  <- -R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " ADD R0, R2, #0 ; R0 <- R2 \n"
+    "AND R3, R3, #0 ; R3 <- 0 \nADD R2, R3, #-1 ; R2 <- -1 \nADD R0, R0, #0 ; Tests the sign of R0\nBRz error_" ^ error_label ^" \nBRn zero_neg_" ^ zero_neg_label ^ " \nNOT R0, R0 \nADD R0, R0, #1 ; if R0>0 then R0 <- -R0 \nBR test_one_" ^ test_one_label ^ " \nzero_neg_" ^ zero_neg_label ^ " ADD R3, R3, #1 \ntest_one_" ^ test_one_label ^ " ADD R1, R1, #0 ; Tests the sign of R1 \nBRzp loop_" ^ loop_label ^ " \nNOT R3, R3 \nADD R3, R3, #2 ; R3 <- 1-R3 \nNOT R1,R1 \nADD R1, R1, #1 ; R1 <- -R1 \nloop_" ^ loop_label ^ " ADD R2, R2, #1 ; R2 <- R2+1 \nADD R1, R1, R0 ; R1<-R1+R0 \nBRzp loop_" ^ loop_label ^ " \nADD R3, R3, #-1 \nBRnp end_" ^ end_label ^ " ; Tests if R3 = 1  \nNOT R2, R2 \nADD R2, R2, #1 ; R2  <- -R2 \nBR end_" ^ end_label ^ " \nerror_" ^ error_label ^ " ; TO COMPLETE \nend_" ^ end_label ^ " ADD R0, R2, #0 ; R0 <- R2 \n"
     (* TO DO : DIVISION BY ZERO TO HANDLE *)
   | S_MOD -> 
     let error_label = label_generator() in
@@ -370,9 +370,12 @@ and compile_code typ_code =
     | Tast.CWHILE (typ_expr, typ_code)->
       let condition_asm = compile_typ_expr false typ_expr in
       let code_asm = compile_code typ_code in
-      let label_condition = label_generator() in
-      let label_end = label_generator() in
-      "cond_" ^ label_condition ^ " " ^ condition_asm ^ "ADD R0, R0, #0 ; Tests if the condition is true \n" ^ "BRz end_" ^ label_end ^ " ; If not go to the end of the while block \n" ^ code_asm ^ "BR cond_" ^ label_condition ^ "\nend_" ^ label_end 
+      let code_label = label_generator() in 
+      let cte_label1 = label_generator() in
+      let cte_label2 = label_generator() in  
+      let nb_lines_c = count_ligns code_asm in
+      let nb_lines_e = count_ligns condition_asm in
+      condition_asm ^ "ADD R0, R0, #0 ; Tests if the WHILE condition is true \nBRnp code_" ^ code_label ^ " \nLEA R0, #11 \nLD R2 cte_" ^ cte_label1 ^ " \nBR ignore_cte_" ^ cte_label1 ^ "\ncte_" ^ cte_label1 ^ " .FILL #" ^ string_of_int nb_lines_c ^ " \nignore_cte_" ^ cte_label1 ^ " ADD R0, R0, R2 \nJMP R0 \ncode_" ^ code_label ^ " " ^ code_asm ^ "LEA R0, #-9 \nLD R2 cte_" ^ cte_label2 ^ " \nBR ignore_cte_" ^ cte_label2 ^" \n cte_" ^ cte_label2 ^ " .FILL #" ^ string_of_int (-nb_lines_e - nb_lines_c) ^ " \nignore_cte_" ^ cte_label2 ^ " ADD R0, R0, R2 \nJMP R0 \n"
     | Tast.CRETURN (Some typ_expr) -> (* TO DO *)
       "; RERTURN IS YET TO IMPLEMENT \n" 
     | _ -> ""
