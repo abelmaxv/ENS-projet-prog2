@@ -1,11 +1,13 @@
-
+int y;
 int main ()
 {
     int x;
-    while(1)
+    x = 3;
+    y = 0;
+    while(0<x)
     {
-        x++;
+        --x;
+        y++;
     }
-    x= 3;
     return 0;
 }
