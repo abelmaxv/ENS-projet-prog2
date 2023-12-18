@@ -132,7 +132,7 @@ let rec string_expr typ_expr =
     (* Creates the string memory location and increases global_counter for other global variable*)
     Queue.add !global_counter string_location;
     global_counter := !global_counter + String.length s + 1;
-    ".STRINGZ " ^ s ^ " \n"
+    ".STRINGZ \"" ^ s ^ "\" \n"
 
   | Tast.SET_VAR (_, typ_expr) | Tast.SET_VAL (_, typ_expr) | Tast.OP1 (_, typ_expr) -> 
     string_expr typ_expr
@@ -400,6 +400,6 @@ let compile_file f =
   let string_mem = cat_list (List.map string_var_declaration f) in 
   let code = cat_list (List.map compile_var_declaration_init f)  in
   let l = count_ligns code in
-  let header = ".ORIG x3000 \nLD R6 init_stack \nBR ignore_init_stack \ninit_stack .FILL #65503\nignore_init_stack ADD R5, R6, #0 \nLD R4 init_static \nBR ignore_init_static \ninit_static .FILL #" ^ string_of_int (l + 7 + 12288) ^ "\nignore_init_static BR main \n" in 
+  let header = ".ORIG x3000 \nLD R6 init_stack \nBR ignore_init_stack \ninit_stack .FILL #65503\nignore_init_stack ADD R5, R6, #0 \nLD R4 init_static \nBR ignore_init_static \ninit_static .FILL #" ^ string_of_int (l + 8 + 12288) ^ "\nignore_init_static BR main \n" in 
   let footer =  ".END \n" in
   header ^ code ^ string_mem ^ footer

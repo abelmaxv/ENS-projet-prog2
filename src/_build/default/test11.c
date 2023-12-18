@@ -1,4 +1,4 @@
-/* Algorithme d'expodentiation rapide : calcul de a^n */
+/* Algorithme d'expodentiation rapide imperatif : calcul de a^n */
 
 int a;
 int n;

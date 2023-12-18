@@ -304,7 +304,7 @@ and check_expr exp l = match exp with
   | Cast.OP2 (b_op, le1, le2) ->
     let taste1 = check_loc_expr le1 in
     let taste2 = check_loc_expr le2 in 
-    let (t_opt, _) = taste2 in 
+    let (t_opt, _) = taste1 in 
     check_bin_op b_op taste1 taste2 l;
     t_opt, Tast.OP2 (b_op, taste1, taste2)
   | Cast.CMP (cmp_op, le1, le2) ->
