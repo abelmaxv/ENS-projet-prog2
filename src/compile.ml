@@ -97,6 +97,8 @@ let local_counter = ref 0 (* Counts the number of vraiable declared in a block*)
 let global_counter = ref 0  (* Counts the number of global variable declared *)
 let string_location = Queue.create()  (* Stores the position of strings in the static memory, just after the code *)
 
+let arg_counter = ref 0 (*Counts the number of arguments of a function *)
+
 (* Concatenates elements of a list of strings *)
 let rec cat_list string_l = 
   match string_l with
@@ -113,7 +115,7 @@ let count_ligns s =
   done;
   !counter
 
-    let label_counter = ref 0 
+let label_counter = ref 0 
 
 (* Generates a fresh label *)
 let label_generator () = incr label_counter; "label" ^ string_of_int(!label_counter)
@@ -250,6 +252,8 @@ let compile_cmp_op cmp_op =
     let end_label = label_generator() in
     "NOT R0, R0 \nADD R0, R0, #1 \nADD R1, R1, R0 \nBRz eq_" ^ eq_label ^ " \nAND R0, R0, #0 \nBR end_" ^ end_label ^ " \neq_" ^ eq_label ^ "  AND R0, R0, #0 \nADD R0, R0, #1 \nend_" ^ end_label ^ " "
 
+    
+
 
 
 let rec compile_typ_expr addr typ_expr = 
@@ -302,7 +306,15 @@ and compile_expr addr expr =
     else 
       "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R4 \nLDR R2, R2, #0  ; R2 <- M[R4 + offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x global) \n"
   | Tast.CALL (name, typ_expr_l) -> 
-    "; CALLING FUNCTIONS IS YET TO IMPLEMENT \n" (*TO DO*)
+    let compile_arg expr = 
+      (* Compiles an expression then puts the result in the stack *)
+      let expr_asm = compile_typ_expr false expr in
+      expr_asm ^ "STR R0, R6, #0 \nADD R6, R6, #-1 ; Push an argument \n"
+    in
+    let nb_args = List.length typ_expr_l in 
+    let arg_asm = cat_list (List.rev (List.map compile_arg typ_expr_l)) in
+    let cte_label = label_generator() in
+    arg_asm ^ "JSR " ^ name ^ "\nLDR R0, R6, #0 \nADD R6, R6, #1 ; pop return result from stack \nLD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(nb_args) ^ "\nignore_cte_" ^ cte_label ^ " ADD R6, R6, R2 ; pop arguments \n"
   | Tast.OP1 (mon_op, typ_expr) -> 
     let expr_asm = 
       begin
@@ -335,7 +347,6 @@ and compile_expr addr expr =
     cat_list (List.map (compile_typ_expr false) typ_expr_l )
 
 
-  
 
 let rec compile_var_declaration typ_vd = 
   match typ_vd with
