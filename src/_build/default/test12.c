@@ -3,7 +3,6 @@
 int main()
 {
     int result;
-    int mark;
     int counter; 
     int *s;
 
@@ -11,14 +10,14 @@ int main()
     s = "ew";
     counter = 0;
 
-    while (counter < 3)
+    while (counter < 2)
     {
         if (*(s) == 'w')
         {
             result = 1;
-            mark = counter;
         }
         counter++;
+        s++;
     }
     return result;
 }  

@@ -94,6 +94,7 @@ end
 (*________________________ SOME USEFULL TOOLS _______________________*)
 
 let local_counter = ref 0 (* Counts the number of vraiable declared in a block*)
+let arg_counter = ref 0 (* Counts the number of arguments when declaring a function *)
 let global_counter = ref 0  (* Counts the number of global variable declared *)
 let string_location = Queue.create()  (* Stores the position of strings in the static memory, just after the code *)
 
@@ -270,7 +271,7 @@ and compile_expr addr expr =
       (* RO <- addr of name *)
       begin 
         if (is_loc name) then
-          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R0, R2, R5 ; R0 <- R5 - offset (addr of local) \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(-get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R0, R2, R5 ; R0 <- R5 - offset (addr of local) \n"
         else
           "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R0, R4, R2 ; R0 <- R4 + offset (addr of gloabl) \n"
       end 
@@ -278,7 +279,7 @@ and compile_expr addr expr =
       (* R0 <- value of name *)
       begin
         if (is_loc name) then
-          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nLDR R0, R2, #0 ; R0 <- M[R5-offset] (value of local)  \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(- get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nLDR R0, R2, #0 ; R0 <- M[R5-offset] (value of local)  \n"
         else
           "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R4 \nLDR R0, R2, #0 ; R0 <- M[R4+offset] (value of gloabl) \n"
       end
@@ -294,7 +295,7 @@ and compile_expr addr expr =
     let cte_label = label_generator() in
     expr_asm ^
     if (is_loc name) then
-      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nSTR R0, R2, #0 ; M[R5 - offset] <- R0 (x = e with x local) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(- get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nSTR R0, R2, #0 ; M[R5 - offset] <- R0 (x = e with x local) \n"
     else 
       "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R4 \nSTR R0, R2, #0 ; M[R4 + offset]<- R0 (x = e with x global) \n"
   | Tast.SET_VAL (name, typ_expr) ->
@@ -302,7 +303,7 @@ and compile_expr addr expr =
     let cte_label = label_generator() in
     expr_asm ^
     if (is_loc name) then
-      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #-" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nLDR R2, R2, #0  ; R2 <- M[R5 - offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x local) \n"
+      "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(- get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R5 \nLDR R2, R2, #0  ; R2 <- M[R5 - offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x local) \n"
     else 
       "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nignore_cte_" ^ cte_label ^ " ADD R2, R2, R4 \nLDR R2, R2, #0  ; R2 <- M[R4 + offset] \nSTR R0, R2, #0 ; M[R2] <- R0 (*x = e with x global) \n"
   | Tast.CALL (name, typ_expr_l) -> 
@@ -313,8 +314,8 @@ and compile_expr addr expr =
     in
     let nb_args = List.length typ_expr_l in 
     let arg_asm = cat_list (List.rev (List.map compile_arg typ_expr_l)) in
-    let cte_label = label_generator() in
-    arg_asm ^ "JSR " ^ name ^ "\nLDR R0, R6, #0 \nADD R6, R6, #1 ; pop return result from stack \nLD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(nb_args) ^ "\nignore_cte_" ^ cte_label ^ " ADD R6, R6, R2 ; pop arguments \n"
+    let cte_label = label_generator() in (* Est ce que c'est vraiment LDR R0, R6, #1 ?*)
+    arg_asm ^ "JSR " ^ name ^ "_function \nLDR R0, R6, #1 \nADD R6, R6, #1 ; pop return result from stack \nLD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(nb_args) ^ "\nignore_cte_" ^ cte_label ^ " ADD R6, R6, R2 ; pop arguments \n"
   | Tast.OP1 (mon_op, typ_expr) -> 
     let expr_asm = 
       begin
@@ -385,12 +386,21 @@ and compile_code typ_code =
       let nb_lines_c = count_ligns code_asm in
       let nb_lines_e = count_ligns condition_asm in
       condition_asm ^ "ADD R0, R0, #0 ; Tests if the WHILE condition is true \nBRnp code_" ^ code_label ^ " \nLEA R0, #11 \nLD R2 cte_" ^ cte_label1 ^ "\nBR ignore_cte_" ^ cte_label1 ^ "\ncte_" ^ cte_label1 ^ " .FILL #" ^ string_of_int nb_lines_c ^ " \nignore_cte_" ^ cte_label1 ^ " ADD R0, R0, R2 \nJMP R0 \ncode_" ^ code_label ^ " " ^ code_asm ^ "LEA R0, #-9 \nLD R2 cte_" ^ cte_label2 ^ "\nBR ignore_cte_" ^ cte_label2 ^" \ncte_" ^ cte_label2 ^ " .FILL #" ^ string_of_int (-nb_lines_e - nb_lines_c) ^ " \nignore_cte_" ^ cte_label2 ^ " ADD R0, R0, R2 \nJMP R0 \n"
-    | Tast.CRETURN (Some typ_expr) -> (* TO DO *)
-      "HALT ; RERTURN IS YET TO IMPLEMENT \n" 
-    | _ -> ""
+    | Tast.CRETURN (Some typ_expr) -> 
+      let cte_label = label_generator() in 
+      let expr_asm = compile_typ_expr false typ_expr in 
+      expr_asm ^ "LD R2 cte_" ^ cte_label ^ "\nBR ignore_cte_" ^ cte_label ^ "\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(!local_counter) ^ "\nignore_cte_" ^ cte_label ^ " ADD R6, R6, R2 ; pop local variables\nADD R6, R6, #1 \nLDR R5, R6, #0 ; pop base of calling function \nADD R6, R6, #1 \nLDR R7, R6, #0 ; pop return addr \nSTR R0, R6, #1 ;Store return value \nRET \n"
+    | _ -> "" (*TO DO*)
 
+let compile_arg typ_vd = 
+  match typ_vd with
+  | Tast.CDECL (name, _) -> 
+    add (create_item name true (- (!arg_counter + 4)));
+    incr arg_counter;
+    ""
+  | Tast.CFUN _ -> 
+    failwith "declaration of a function inside function arguments"
 
-(* TO DO : traitement des arguments de fonction different des variables locales *)
 let compile_var_declaration_init typ_vd = 
   match typ_vd with
   | Tast.CDECL (name, _) -> (* declaration of a global variable *)
@@ -400,17 +410,19 @@ let compile_var_declaration_init typ_vd =
   | Tast.CFUN (name, typ_vd, typ, typ_code) ->
     add (create_item name false (-1));
     local_counter := 0;
-    let var_asm = cat_list (List.map compile_var_declaration typ_vd) in
+    arg_counter := 0;
+    let var_asm = cat_list (List.map compile_arg typ_vd) in
     let code_asm = compile_code typ_code in
     pop_multiple (!local_counter);
     local_counter := 0;
-    (* TO DO : IMPLEMENT FUNCTION *)
-    name ^ " " ^ var_asm ^ code_asm
+    arg_counter := 0;
+    let function_header = "ADD R6, R6, #-1 ; place for return \nSTR R7, R6, #0 \nADD R6, R6, #-1 ; push R7\nSTR R5, R6, #0 \nADD R6, R6, #-1 ; Push R5 \nADD R5, R6, #0 ; New base for function \n" in 
+    name ^ "_function " ^ function_header ^ var_asm ^ code_asm
 
 let compile_file f = 
   let string_mem = cat_list (List.map string_var_declaration f) in 
   let code = cat_list (List.map compile_var_declaration_init f)  in
-  let l = count_ligns code in
-  let header = ".ORIG x3000 \nLD R6 init_stack \nBR ignore_init_stack \ninit_stack .FILL #65503\nignore_init_stack ADD R5, R6, #0 \nLD R4 init_static \nBR ignore_init_static \ninit_static .FILL #" ^ string_of_int (l + 8 + 12288) ^ "\nignore_init_static BR main \n" in 
-  let footer =  ".END \n" in
+  let l = count_ligns code in 
+  let header = ".ORIG x3000 \nLD R6 init_stack \nBR ignore_init_stack \ninit_stack .FILL #65503\nignore_init_stack ADD R5, R6, #0 \nLD R4 init_static \nBR ignore_init_static \ninit_static .FILL #" ^ string_of_int (l + 13 + 12288) ^ "\nignore_init_static JSR main_function \nLD R2 end_addr \nBR #1 \nend_addr .FILL #" ^ string_of_int (l + 12 +  12288) ^ " \nJMP R2 \n" in 
+  let footer =  "HALT \n.END \n" in
   header ^ code ^ string_mem ^ footer
