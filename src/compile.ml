@@ -423,6 +423,6 @@ let compile_file f =
   let string_mem = cat_list (List.map string_var_declaration f) in 
   let code = cat_list (List.map compile_var_declaration_init f)  in
   let l = count_ligns code in 
-  let header = ".ORIG x3000 \nLD R6 init_stack \nBR #1 \ninit_stack .FILL #65503\nADD R5, R6, #0 \nLD R4 init_static \nBR #1 \ninit_static .FILL #" ^ string_of_int (l + 13 + 12288) ^ "\n JSR main_function \nLD R2 end_addr \nBR #1 \nend_addr .FILL #" ^ string_of_int (l + 12 +  12288) ^ " \nJMP R2 \n" in 
+  let header = ".ORIG x3000 \nLD R6 init_stack \nBR #1 \ninit_stack .FILL #65503\nADD R5, R6, #0 \nLD R4 init_static \nBR #1 \ninit_static .FILL #" ^ string_of_int (l + 13 + 12288) ^ "\nJSR main_function \nLD R2 end_addr \nBR #1 \nend_addr .FILL #" ^ string_of_int (l + 12 +  12288) ^ " \nJMP R2 \n" in 
   let footer =  "HALT \n.END \n" in
   header ^ code ^ string_mem ^ footer

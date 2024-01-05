@@ -1,16 +1,21 @@
-int fact(int n)
+int foo1(int x)
 {
-    if (n = 0)
-    {
-        return 1;
-    }
-    else 
-    {
-        return n*fact(n-1);
-    }
+    int y;
+    y = 3;
+    return x + y;
+}
+
+int foo2(int x, int y)
+{
+    int a;
+    int b;
+    return foo1(x) + y;
 }
 
 int main()
 {
-    return fact(1);
+    int a;
+    int b;
+    int c;
+    return foo2(3,4);
 }
