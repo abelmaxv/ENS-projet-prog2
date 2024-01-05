@@ -1,20 +1,16 @@
-int c;
-
-
-int foo()
+int fact(int n)
 {
-    if (c=0)
+    if (n == 0)
     {
-        return 0;
+        return 1;
     }
-    else
+    else 
     {
-        c--;
-        return foo();
+        return n*fact(n-1);
     }
 }
 
 int main()
 {
-    return foo();
+    return fact(6);
 }

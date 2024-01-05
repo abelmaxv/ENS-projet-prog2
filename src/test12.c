@@ -2,22 +2,18 @@
 
 int main()
 {
-    int result;
     int counter; 
     int *s;
 
-    result = 0;
-    s = "ew";
     counter = 0;
+    s = "zefewezef";
 
-    while (counter < 2)
+    while (counter < 9)
     {
-        if (*(s) == 'w')
+        if (*(s+(counter++)) == 'w')
         {
-            result = 1;
+            return 1;
         }
-        counter++;
-        s++;
     }
-    return result;
+    return 0;
 }  

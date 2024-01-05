@@ -198,7 +198,7 @@ let compile_mon_op mon_op =
   | Cast.M_PRE_DEC -> 
     "LDR R1, R0, #0 ; R1 <- M[R0] \nADD R1, R1, #-1 ; R1 <- R1+1 \nSTR R1, R0, #0 ; M[R0]<-R1 \nADD R0, R1, #0 ; R0 <- R1 (--x) \n"
   | Cast.M_DEREF -> 
-    "LDR R0 R0 #0 \nLDR R0,R0, #0 ; R0 <- M[M[R0]] (*x) \n"
+    "LDR R0, R0, #0 ; R0 <- M[R0] (*x) \n"
   | Cast.M_ADDR ->
     (*with the compile_typ_expr R0 contains the address of the variable*) 
     "" 
@@ -320,7 +320,7 @@ and compile_expr addr expr =
     let expr_asm = 
       begin
         match mon_op with 
-        | M_MINUS | M_NOT -> compile_typ_expr false typ_expr (* For these operation we need the value of a variable *)
+        | M_MINUS | M_NOT | M_DEREF -> compile_typ_expr false typ_expr (* For these operation we need the value of a variable *)
         |_ -> compile_typ_expr true typ_expr (* The other we need the  adress of a variable *)
       end 
     in
@@ -424,5 +424,5 @@ let compile_file f =
   let code = cat_list (List.map compile_var_declaration_init f)  in
   let l = count_ligns code in 
   let header = ".ORIG x3000 \nLD R6 init_stack \nBR #1 \ninit_stack .FILL #65503\nADD R5, R6, #0 \nLD R4 init_static \nBR #1 \ninit_static .FILL #" ^ string_of_int (l + 13 + 12288) ^ "\nJSR main_function \nLD R2 end_addr \nBR #1 \nend_addr .FILL #" ^ string_of_int (l + 12 +  12288) ^ " \nJMP R2 \n" in 
-  let footer =  "HALT \n.END \n" in
-  header ^ code ^ string_mem ^ footer
+  let footer =  ".END \n" in
+  header ^ code ^ "HALT ; end of the code \n" ^ string_mem ^ footer
