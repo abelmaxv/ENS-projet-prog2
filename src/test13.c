@@ -1,9 +1,17 @@
-int add (int x)
+// A simple exemple of calling a function
+
+int foo(int x, int y)
 {
-    return x+1;
+    return x+3*y;
 }
 
 int main()
 {
-    return add(3);
+    int x;
+    int y;
+
+    x = 3;
+    y = 4;
+    
+    return foo (x,y);
 }

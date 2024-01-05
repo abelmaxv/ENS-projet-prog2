@@ -449,11 +449,11 @@ let check_var_declaration_init v = match v with
 | Cast.CFUN (pos, name, args, typ, l_code) -> 
    last_function_location := pos ;
    check_names args pos;
+   push (var_declaration_loc_create v false);
    let taste_list = List.map check_var_declaration args in
    let tastc = check_loc_code l_code in
    let (t_opt, _) = tastc in 
    pop_mult (List.length args) pos ;
-   push (var_declaration_loc_create v false);
    begin
     match t_opt with
     | None -> raise (Type_Error (pos, "The function don't have a return in every branch"))
