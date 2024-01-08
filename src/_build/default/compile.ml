@@ -390,7 +390,10 @@ and compile_code typ_code =
       let cte_label = label_generator() in 
       let expr_asm = compile_typ_expr false typ_expr in 
       expr_asm ^ "LD R2 cte_" ^ cte_label ^ "\nBR #1\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(!local_counter) ^ "\nADD R6, R6, R2 ; pop local variables\nADD R6, R6, #1 \nLDR R5, R6, #0 ; pop base of calling function \nADD R6, R6, #1 \nLDR R7, R6, #0 ; pop return addr \nSTR R0, R6, #1 ;Store return value \nRET \n"
-    | _ -> "" (*TO DO*)
+    | _ -> 
+      (* return ; <=> return 0;*)
+      let cte_label = label_generator() in 
+      "AND R0, #0 \n LD R2 cte_" ^ cte_label ^ "\nBR #1\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(!local_counter) ^ "\nADD R6, R6, R2 ; pop local variables\nADD R6, R6, #1 \nLDR R5, R6, #0 ; pop base of calling function \nADD R6, R6, #1 \nLDR R7, R6, #0 ; pop return addr \nSTR R0, R6, #1 ;Store return value \nRET \n"
 
 let compile_arg typ_vd = 
   match typ_vd with

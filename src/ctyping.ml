@@ -121,6 +121,8 @@ open Env
 open Tast
 exception Type_Error of location * string
 
+let is_main = ref false
+
 (*CHECKING FUNCTIONS FOR EXPRESSIONS*)
 
 
@@ -447,6 +449,13 @@ let check_var_declaration_init v = match v with
    push (var_declaration_loc_create v true);
    Tast.CDECL (name, typ)
 | Cast.CFUN (pos, name, args, typ, l_code) -> 
+    if (name = "main") then 
+      begin
+        if (args <> []) then
+          raise (Type_Error (pos, "Main function can't have arguments"))
+        else is_main := true
+      end
+    ;
    last_function_location := pos ;
    check_names args pos;
    push (var_declaration_loc_create v false);
@@ -461,4 +470,8 @@ let check_var_declaration_init v = match v with
     | _ -> Tast.CFUN (name,taste_list, typ, tastc)
    end
 
-let check_file var_dec_l = List.map check_var_declaration_init var_dec_l
+let check_file var_dec_l = 
+  let res = List.map check_var_declaration_init var_dec_l in
+  if not !is_main then 
+    failwith "Error : there is no main function"
+  else res

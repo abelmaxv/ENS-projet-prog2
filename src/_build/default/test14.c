@@ -1,3 +1,5 @@
+/* Multiple function calls */
+
 int foo1(int x)
 {
     int y;

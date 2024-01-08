@@ -6,16 +6,14 @@ int main()
     int *s;
 
     counter = 0;
-    s = "w";
+    s = "zefewezef";
 
-    while (counter < 1)
+    while (counter < 9)
     {
-        if (*(s) == 'w')
+        if (*(s+(counter++)) == 'w')
         {
             return 1;
         }
-        counter++;
-        s++;
     }
     return 0;
 }  
