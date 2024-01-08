@@ -38,4 +38,4 @@ dot -v -Tpng -O name_ast.dot
 
 ## Structure des tests
 
-Dans le dossier `src` se trouvent 17 fichiers de test C--. Les 10 premiers échouent à la compilation et testent les différentes fonctionnalités de [src/ctyping.ml]. Les 7 suivants compiles et testent differentes fonctionnalités de [src/compile.ml].
+Dans le dossier `src` se trouvent 17 fichiers de test C--. Les 10 premiers échouent à la compilation et testent les différentes fonctionnalités de [src/ctyping.ml]. Les 7 suivants compilent et testent differentes fonctionnalités de [src/compile.ml].
