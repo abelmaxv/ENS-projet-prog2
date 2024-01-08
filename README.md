@@ -30,7 +30,7 @@ Lors de l'appel
 ```
 ./ccomp --debug name.c
 ```
-un fichier `name_ast.dot` est aussi générer. En executant la commande suivante il permet de générer le fichier `name_ast.dot.png` qui permet de visualiser l'arbre syntaxique : 
+un fichier `name_ast.dot` est aussi généré. En executant la commande suivante il permet de générer le fichier `name_ast.dot.png` pour visualiser l'arbre syntaxique : 
 
 ```
 dot -v -Tpng -O name_ast.dot
