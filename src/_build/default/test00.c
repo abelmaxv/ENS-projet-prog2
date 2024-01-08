@@ -1,4 +1,4 @@
-/* The following program fails because we try to set a pointer variable to a integer value*/
+/* The following program fails because we try to set a pointer variable to a integer value */
 
 
 int main(){

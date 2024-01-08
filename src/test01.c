@@ -4,6 +4,6 @@ int global;
 
 int main() {
   int* global;
-  return 0;
+  return;
 }
 

@@ -1,3 +1,5 @@
+/*Exemple de fonction recursive : expodentiation rapide */
+
 int exp_rap(int a, int n)
 {
     int p;
@@ -21,5 +23,5 @@ int exp_rap(int a, int n)
 
 int main()
 {
-    return exp_rap(3,4);
+    return exp_rap(5,5);
 }

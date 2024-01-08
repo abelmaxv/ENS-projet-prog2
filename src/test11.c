@@ -8,8 +8,8 @@ int main()
     int result;
     int y;
 
-    a = 3; /* Values to modify for the test */
-    n = 4;
+    a = 5; 
+    n = 5;
 
     if (n<0)
     {

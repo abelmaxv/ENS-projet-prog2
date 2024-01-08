@@ -1,3 +1,5 @@
+/* Exemple de fonction recursive : factorielle */
+
 int fact(int n)
 {
     if (n == 0)

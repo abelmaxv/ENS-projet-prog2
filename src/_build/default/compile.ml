@@ -9,6 +9,15 @@
 (* Ce code permet, a partir un l'ast typé fournit par la fonction check_file du module ctyping, 
    une traducction d'un programme C en LC-3 *)
 
+(*
+  STRUCTURE DU PROGRAMME
+  I- DEFINTION D4UNE STRUCTURE POUR LA TABLE DE SYMBOLS
+  II- FONCTIONS ET VARIABLES GLOBALES UTILISEES DANS LA SYNTHESE DE CODE
+  III- SYNTHESE DE CODE
+  III.1 - PREMIERE PASSE : traitement des chaines de caractères dans la zone statique
+  III.2 - SYNTHESE DE CODE LC-3 : expressions, codes, ...    
+*)
+
 
 (*_________________________ SYMBOL TABLE DEFINITION (Stack) _________________________ *)
 open Cast
@@ -271,9 +280,9 @@ and compile_expr addr expr =
       (* RO <- addr of name *)
       begin 
         if (is_loc name) then
-          "LD R2 cte_" ^ cte_label ^ "\nBR #1\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(-get_pos name) ^ "\n ADD R0, R2, R5 ; R0 <- R5 - offset (addr of local) \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR #1\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(-get_pos name) ^ "\nADD R0, R2, R5 ; R0 <- R5 - offset (addr of local) \n"
         else
-          "LD R2 cte_" ^ cte_label ^ "\nBR #1\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\n ADD R0, R4, R2 ; R0 <- R4 + offset (addr of gloabl) \n"
+          "LD R2 cte_" ^ cte_label ^ "\nBR #1\ncte_"^ cte_label ^ " .FILL #" ^ string_of_int(get_pos name) ^ "\nADD R0, R4, R2 ; R0 <- R4 + offset (addr of gloabl) \n"
       end 
     else  
       (* R0 <- value of name *)

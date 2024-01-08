@@ -1,3 +1,5 @@
+/*A simple program that compiles */
+
 int y;
 int main ()
 {
@@ -9,5 +11,5 @@ int main ()
         --x;
         y++;
     }
-    return 0;
+    return y;
 }

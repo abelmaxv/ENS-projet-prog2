@@ -11,5 +11,5 @@ int main()
     int*w;
     v = foo(3,w);
     v = foo(2,3);
-    return v;
+    return;
 }

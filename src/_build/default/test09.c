@@ -1,27 +1,9 @@
-/* This program should compile : to illustrate a 'complex' program that is suppose to work */
+/* This program should fail : x++ is not an lvalue */
 
-int global1;
-int global2;
 
-int* foo(int v, int* w)
+int main()
 {
-    return &v-w;
-}
-
-int main(int a)
-{
-    int *v;
-    if( global1 == 1 )
-    {
-        v = foo(a+3, v);
-    }
-    else
-    {
-        return a;
-    }
-    while (global2)
-    {
-        global2 --;
-    }
-    return *v;
+    int x;
+    x++=3;
+    return;
 }
